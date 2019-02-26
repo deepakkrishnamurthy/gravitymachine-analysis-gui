@@ -1,0 +1,9 @@
+2018_06_11
+
+XPID added
+
+YTracking algorithm deeply change
+
+peak detection for FM
+new order corresponds to new peak detected
+gain autotuning

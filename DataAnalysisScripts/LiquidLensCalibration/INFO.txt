@@ -1,0 +1,13 @@
+2018_07_20
+
+WARNING: Still need to be tested --> In Progress code
+
+new commented version
+- stuff "repaired" with gain tuning
+- sinus fitting for the phase replaced by a simple smoothing (sliding average + interpolation)
+
+4 improvements to bring:
+- use the local minima of the Yfocusmeasure to give order
+- detect if the object is in focus by counting the peaks
+- override the gain(gain=1) when in focus
+- fit a spline and substract it to the focus measure mesure to get a better resolution on the peaks (no more maximal speed)

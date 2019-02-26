@@ -1,0 +1,4 @@
+2018_07_20
+
+- A bug with the 3D plot still need to be fixed (view reset when opening a new set of data)
+
