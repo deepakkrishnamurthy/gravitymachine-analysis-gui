@@ -10,9 +10,6 @@ import numpy as np
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
 
 
-
-from utils import rangeslider as rangeslider
-
 from CSV_Reader import CSV_Reader
 from plot3D import plot3D
 from VideoWindow import VideoWindow
@@ -266,10 +263,10 @@ class options3D_Dialog(QtGui.QDialog):
         # distance between the camera and the center
         self.label3 = QtGui.QLabel('Camera distance')
         self.hslider3 = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.hslider3.setRange(0,100)
+        self.hslider3.setRange(0,500)
         self.hslider3.setValue(distance)
         self.spinbox3=QtGui.QSpinBox()
-        self.spinbox3.setRange(0,100)
+        self.spinbox3.setRange(0,500)
         self.spinbox3.setValue(distance)
         self.hslider3.valueChanged.connect(self.spinbox3.setValue)
         self.spinbox3.valueChanged.connect(self.hslider3.setValue)
