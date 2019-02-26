@@ -20,6 +20,7 @@ import matplotlib as mpl
 #                            3D Plot widget
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''        
+pg.setConfigOptions(antialias=True)
 class plot3D(gl.GLViewWidget):  
     
     reset_sliders=QtCore.pyqtSignal(int)
@@ -117,9 +118,10 @@ class plot3D(gl.GLViewWidget):
         
     def generatePgColormap(self):
         colors=self.cmap(np.arange(256))
-        colors=colors[50:]
-        positions = np.linspace(0, 1, len(colors))
-        pgMap = pg.ColorMap(positions, colors)
+        self.colors=colors[0:-50]
+        positions = np.linspace(0, 1, len(self.colors))
+        pgMap = pg.ColorMap(positions, self.colors)
+        self.color_map=mpl.colors.ListedColormap(self.colors)
         return pgMap
     
     #------------------------------------------------------------
@@ -140,15 +142,24 @@ class plot3D(gl.GLViewWidget):
         
         self.Z_prev = self.Z_curr
         
-        self.move_camera(dZ)
+        self.move_camera(dZ, time)
         # We also should move the camera along with the object and also orbit the camera
         
-    def move_camera(self, Z):
+#    def zoom_camera(self):
+        
+        
+        
+    def move_camera(self, Z, time):
         self.initial_center=[0,0,Z]
         self.pan(dx=self.initial_center[0], dy=self.initial_center[1], dz=self.initial_center[2], relative=False)
         
+#        self.setCameraPosition(distance)
+        center, dist, elevation, azimuth = self.cameraPosition()
+        
+        
+        
         # Functionality to orbit the camera
-#        self.orbit(azim = 1, elev = 0)
+        self.orbit(azim = 1, elev = 0)
 
     #------------------------------------------------------------
     # TODO when the program opens
@@ -323,9 +334,9 @@ class plot3D(gl.GLViewWidget):
         ax1 = fig.add_axes([0.05, 0.05, 0.04, 0.8])
         # Set the colormap and norm to correspond to the data for which
         # the colorbar will be used.
-        colors=self.cmap(np.arange(256))
-        colors=colors[50:]
-        cmap=mpl.colors.ListedColormap(colors)
+#        colors=self.cmap(np.arange(256))
+#        colors=colors[0:-50]
+#        cmap=mpl.colors.ListedColormap(self.colors)
         norm = mpl.colors.Normalize(vmin=0, vmax=self.Time[-1])
         
         # ColorbarBase derives from ScalarMappable and puts a colorbar
@@ -333,7 +344,7 @@ class plot3D(gl.GLViewWidget):
         # standalone colorbar.  There are many more kwargs, but the
         # following gives a basic continuous colorbar with ticks
         # and labels.
-        mpl.colorbar.ColorbarBase(ax1, cmap=cmap,
+        mpl.colorbar.ColorbarBase(ax1, cmap=self.color_map,
                                         norm=norm,
                                         orientation='vertical')
         file_directory=directory+'colorbar.svg'

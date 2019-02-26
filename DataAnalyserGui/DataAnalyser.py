@@ -43,9 +43,9 @@ class CentralWidget(QtWidgets.QWidget):
         #widgets
         self.video_window=VideoWindow()
         self.fps=None #fps for saving
-        self.xplot=PlotWidget('X vs Time', label = 'X',color ='r')
-        self.yplot=PlotWidget('Y vs Time', label = 'Y',color ='g')
-        self.zplot=PlotWidget('Z vs Time', label = 'Z',color =(50, 100, 255))
+        self.xplot=PlotWidget('X displacement', label = 'X',color ='r')
+        self.yplot=PlotWidget('Y displacement', label = 'Y',color ='g')
+        self.zplot=PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
         
         #Tool
         self.csv_reader=CSV_Reader()
@@ -69,30 +69,53 @@ class CentralWidget(QtWidgets.QWidget):
         plot3D_layout.addWidget(self.panVSlider,0,1,1,1)
         plot3D_layout.addWidget(self.panHSlider,1,0,1,1)
         plot3D_layout.addWidget(self.home3Dbutton,1,1,1,1)
+
+        # Create a vertical layout consisting of the video window and 3D plot
+        v_layout = QtGui.QVBoxLayout()
+        # v_layout = QtGui.QGridLayout()
+
+        # v_layout.addWidget(self.video_window, 0,0,1,1)
+        # v_layout.addLayout(self.zplot,0,1,1,1)
+
+        v_layout.addWidget(self.video_window)
+        v_layout.addWidget(self.zplot)
+
+
+        # v_layout.addWidget(self.video_window)
+        # v_layout.addLayout(plot3D_layout)
+
+        # v_layout.setStretchFactor(plot3D_layout,0.5)
+  
+
         
         # VERTICAL LAYOUT ON THE LEFT
         h_layout = QtGui.QHBoxLayout()
         
-        v_left_layout=QtGui.QVBoxLayout()
-        v_left_layout.addWidget(self.video_window)
+        # v_left_layout=QtGui.QVBoxLayout()
+        # v_left_layout.addWidget(self.video_window)
         
-        v_right_layout=QtGui.QVBoxLayout()
-        v_right_layout.addWidget(self.xplot)
-        v_right_layout.addWidget(self.yplot)
-        v_right_layout.addWidget(self.zplot)
+        # # v_right_layout=QtGui.QVBoxLayout()
+        # # v_right_layout.addWidget(self.xplot)
+        # # v_right_layout.addWidget(self.yplot)
+        # # v_right_layout.addWidget(self.zplot)
         
-        v_right_layout.setStretchFactor(self.xplot,1)
-        v_right_layout.setStretchFactor(self.yplot,1)
-        v_right_layout.setStretchFactor(self.zplot,1)
+        # # v_right_layout.setStretchFactor(self.xplot,1)
+        # # v_right_layout.setStretchFactor(self.yplot,1)
+        # # v_right_layout.setStretchFactor(self.zplot,1)
         
-        h_layout.addLayout(v_left_layout)
-        h_layout.addLayout(v_right_layout)
+        # h_layout.addLayout(v_left_layout)
+        # h_layout.addLayout(v_right_layout)
+        # h_layout.addLayout(plot3D_layout)
+
+        h_layout.addLayout(v_layout)
         h_layout.addLayout(plot3D_layout)
+
         
-        h_layout.setStretchFactor(v_left_layout,1)
-        h_layout.setStretchFactor(v_right_layout,1)
-        h_layout.setStretchFactor(plot3D_layout,1)
+        # h_layout.setStretchFactor(v_left_layout,1)
+        # h_layout.setStretchFactor(v_right_layout,1)
+        # h_layout.setStretchFactor(plot3D_layout,1)
         # Final action     
+        # self.setLayout(v_layout)
         self.setLayout(h_layout)
         
     def reset_sliders(self,value):
@@ -515,7 +538,11 @@ class MainWindowMill(QtWidgets.QMainWindow):
         print('Opening dataset ...')
 
         self.directory = QtGui.QFileDialog.getExistingDirectory(self)
-        trackFileNames = []
+        
+        self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
+        
+        self.trakFile, *rest = os.path.split(self.trackFile)
+        
         if os.path.exists(self.directory):
 
             # Walk through the folders and identify ones that contain images
@@ -531,26 +558,42 @@ class MainWindowMill(QtWidgets.QMainWindow):
                        value = subFolderName
                        self.image_dict[key]=value
 
-                if(os.path.normpath(dirs) == os.path.normpath(self.directory)):
-                    for fileNames in files:
-                        if('.csv' in fileNames):
-                            trackFileNames.append(fileNames)
+#                if(os.path.normpath(dirs) == os.path.normpath(self.directory)):
+#                    for fileNames in files:
+#                        if('.csv' in fileNames):
+#                            trackFileNames.append(fileNames)
 
-            if(len(trackFileNames)==0):
-                raise FileNotFoundError('CSV track was not found!')      
-            elif(len(trackFileNames)>1):
-                print('More than one .csv file found! Using the most recent one ...')
-                for tracks in trackFileNames:
-                    if('cropped' in tracks):
-                        self.trackFile = tracks
-                        print('Loaded {}'.format(self.trackFile))
-                    elif('mod' in tracks):
-                        self.trackFile = tracks
-                        print('Loaded {}'.format(self.trackFile))
-
-            else:
-                self.trackFile = trackFileNames[0]
+#            if(len(trackFileNames)==0):
+#                raise FileNotFoundError('CSV track was not found!')      
+#            elif(len(trackFileNames)>1):
+#                print('More than one .csv file found!')
+#                
+#                for ii, filename in enumerate(trackFileNames):
+##                    
+#                      print('{}: {} \n'.format(ii+1, filename))
+#                    
+#                print('Choose the file to use:')
+#                file_no = int(input())
+#                    
+#                self.trackFile = trackFileNames[file_no-1]
                 print('Loaded {}'.format(self.trackFile))
+                
+#                for tracks in trackFileNames:
+#                    if('division' in tracks):
+#                        self.trackFile = tracks
+#                        break
+#                    elif('mod' in tracks):
+#                        self.trackFile = tracks
+#                        break
+#                    else:
+#                        self.trackFile = 'track.csv'
+#                        break
+#                    print('Loaded {}'.format(self.trackFile))
+#
+#
+#            else:
+#                self.trackFile = trackFileNames[0]
+                
 
             # Passes the root directory to the Video Window
             # self.central_widget.video_window.initialize_directory(self.directory)
@@ -641,7 +684,7 @@ if __name__ == '__main__':
     #Splash screen (image during the initialisation)
     splash_pix = QtGui.QPixmap('icon/icon.png')
     splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
-    splash.setMask(splash_pix.mask())
+    # splash.setMask(splash_pix.mask())
     splash.show()
     
     
