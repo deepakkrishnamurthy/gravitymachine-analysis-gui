@@ -75,6 +75,8 @@ class CentralWidget(QtWidgets.QWidget):
         # v_layout.addLayout(self.zplot,0,1,1,1)
 
         v_layout.addWidget(self.video_window)
+        
+#        v_layout.addLayout(plot3D_layout)
         v_layout.addWidget(self.zplot)
 
 
@@ -100,9 +102,9 @@ class CentralWidget(QtWidgets.QWidget):
         # # v_right_layout.setStretchFactor(self.yplot,1)
         # # v_right_layout.setStretchFactor(self.zplot,1)
         
-        # h_layout.addLayout(v_left_layout)
+#         h_layout.addLayout(v_left_layout)
         # h_layout.addLayout(v_right_layout)
-        # h_layout.addLayout(plot3D_layout)
+#         h_layout.addLayout(plot3D_layout)
 
         h_layout.addLayout(v_layout)
         h_layout.addLayout(plot3D_layout)
@@ -112,7 +114,7 @@ class CentralWidget(QtWidgets.QWidget):
         # h_layout.setStretchFactor(v_right_layout,1)
         # h_layout.setStretchFactor(plot3D_layout,1)
         # Final action     
-        # self.setLayout(v_layout)
+#        self.setLayout(v_layout)
         self.setLayout(h_layout)
         
     def reset_sliders(self,value):
@@ -191,6 +193,9 @@ class CentralWidget(QtWidgets.QWidget):
         self.csv_reader.Zobjet_data.connect(self.plot3D.update_Z)
         
         self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
+
+        # self.csv_reader.LED_intensity_data.connect(self.video_window.initialize_led_intensity)
+
         self.csv_reader.ImageNames_data.connect(self.video_window.initialize_image_names)
         
         # Added Image Index as another connection

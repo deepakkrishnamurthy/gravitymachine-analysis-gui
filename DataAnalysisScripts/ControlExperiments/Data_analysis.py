@@ -543,15 +543,25 @@ lgd=plt.legend(handles=[dark_patch,pale_patch])
 #plt.savefig(address+'Velocity_Wheel_vs_Cuvette.png',dpi=400,bbox_extra_artists=(lgd,), bbox_inches='tight')
 
 
+edgecolors_list =['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue']
+
 # Figure of Wheel vs Cuvette data
 plt.figure(dpi=150)
 
 width = 0.35  # the width of the bars
 
-plt.scatter(y_pos, velocityCuvette, s=70, facecolors = 'none',edgecolors =['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'], marker ='s',label='Cuvette', linewidths = 2)
-plt.scatter(y_pos, velocityWheel, s=70, facecolors = 'none',  edgecolors=['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'], marker ='o',label = 'Annular Fluidic Chamber', linewidths = 2)
+plt.scatter(y_pos, velocityCuvette, s=70,c =['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'], marker ='s',label='Cuvette', linewidths = 2)
+plt.scatter(y_pos, velocityWheel, s=70,c=['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'], marker ='o',label = 'Annular Fluidic Chamber', linewidths = 2)
 #plt.barh(y_pos-width/2, velocityCuvette,width, xerr=errorCuvette,color=['palegreen','peachpuff','violet','royalblue','salmon','skyblue'])
 
+for ii, color in enumerate(Colors_nb.keys()):
+    
+    plt.fill_between(y_pos, v(color) - sigma_v(color), v(color) + sigma_v(color), color = edgecolors_list[ii], alpha=0.5 )
+#    plt.hlines(v(color),-0.1,5.1, linestyle = '-', color = edgecolors_list[ii])
+#    plt.hlines(v(color) + sigma_v(color),-0.1,5.1, linestyle = '--', color = edgecolors_list[ii])
+#    plt.hlines(v(color) - sigma_v(color),-0.1,5.1, linestyle = '--', color = edgecolors_list[ii])
+    
+    
 plt.errorbar(y_pos, velocityWheel,yerr=errorWheel, fmt ='k-',ecolor=['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'])
 plt.errorbar(y_pos, velocityCuvette,yerr=errorCuvette, fmt ='k--',ecolor=['darkgreen','darkorange','darkviolet','navy','darkred','dodgerblue'])
 dark_patch = mpatches.Patch(color='gray', label='Wheel')
@@ -587,6 +597,10 @@ plt.title("Beads' velocities, Wheel vs. Cuvette")
 
 #lgd=plt.legend(['s','o'],['Cuvette','Wheel'])
 plt.legend(handles = legend_elements,loc='upper left',fontsize = 12)
+
+relError = 100*np.abs((np.array(velocityWheel) - np.array(velocityCuvette))/np.array(velocityCuvette))
+
+print(relError)
 
 '''
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

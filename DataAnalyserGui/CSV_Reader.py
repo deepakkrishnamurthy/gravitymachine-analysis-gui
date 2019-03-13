@@ -23,6 +23,7 @@ class CSV_Reader(QtCore.QObject):
     Zobjet_data = QtCore.pyqtSignal(np.ndarray)
     ImageNames_data = QtCore.pyqtSignal(np.ndarray)
     ImageTime_data = QtCore.pyqtSignal(np.ndarray)
+    LED_intensity_data = QtCore.pyqtSignal(np.ndarray)
 #    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
     
     
@@ -72,6 +73,7 @@ class CSV_Reader(QtCore.QObject):
         focusMeasure=np.array([float(Data[i][8]) for i in range(1,n)])
         focusPhase=np.array([float(Data[i][9]) for i in range(1,n)])
         MaxfocusMeasure=np.array([float(Data[i][10]) for i in range(1,n)])
+        # self.LED_intensity = np.array([float(Data[i][15]) for i in range(1,n)])
         #colorR=np.array([int(Data[i][11]) for i in range(1,n)])
         #colorG=np.array([int(Data[i][12]) for i in range(1,n)])
         #colorB=np.array([int(Data[i][13]) for i in range(1,n)])
@@ -147,16 +149,19 @@ class CSV_Reader(QtCore.QObject):
     def send_image_time(self):
         cropped_ImageNames=self.ImageNames[self.index_min:self.index_max+1]
         cropped_Time=self.Time[self.index_min:self.index_max+1]
+        # cropped_LED_intensity = self.LED_intensity[self.index_min:self.index_max+1]
         
         ImageTime=[]
         new_ImageNames=[]
         ImageIndex = []
+        # new_LED_intensity = []
         
         for i in range(len(cropped_ImageNames)):
             if len(cropped_ImageNames[i])>0:
                 ImageIndex.append(i)
                 new_ImageNames.append(cropped_ImageNames[i])
                 ImageTime.append(round(cropped_Time[i],2))
+                # new_LED_intensity.append(cropped_LED_intensity[i])
                 
         # Checking to see if images are updated for a new dataset
         
@@ -164,6 +169,8 @@ class CSV_Reader(QtCore.QObject):
 
         self.ImageNames_data.emit(np.array(new_ImageNames))
         self.ImageTime_data.emit(np.array(ImageTime))
+        # self.LED_intensity_data.emit(np.array(new_LED_intensity))
+        
 #        self.ImageIndex_data.emit(np.array(ImageIndex))
         
         #fps calculation

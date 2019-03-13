@@ -154,12 +154,12 @@ class plot3D(gl.GLViewWidget):
         self.pan(dx=self.initial_center[0], dy=self.initial_center[1], dz=self.initial_center[2], relative=False)
         
 #        self.setCameraPosition(distance)
-        center, dist, elevation, azimuth = self.cameraPosition()
+        # center, dist, elevation, azimuth = self.cameraPosition()
         
         
         
         # Functionality to orbit the camera
-        self.orbit(azim = 1, elev = 0)
+        # self.orbit(azim = 1, elev = 0)
 
     #------------------------------------------------------------
     # TODO when the program opens

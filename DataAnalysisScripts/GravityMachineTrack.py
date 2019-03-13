@@ -202,7 +202,7 @@ class gravMachineTrack:
 #                    
 #                self.trackFile = trackFileNames[file_no-1]
                 
-                self.trackFile = 'track.csv'
+                self.trackFile = 'track_cropped.csv'
                 print('Loaded {}'.format(self.trackFile))
                 
 #                

@@ -42,7 +42,7 @@ class ImageWidget(pg.GraphicsLayoutWidget):
 
         image_gray=cv2.rotate(image_gray,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
         
-        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(6,6))
+        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6))
                 
         image_gray = clahe.apply(image_gray)
         
@@ -73,6 +73,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.Time_Image=np.array([])
         self.Image_Names=[]
         self.Image_Time = []
+        self.LED_intensity = []
         self.imW = 0
         self.imH = 0
         
@@ -154,6 +155,15 @@ class VideoWindow(QtWidgets.QWidget):
             # print('Current Image Time: {}'.format(currTime))
             cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', (20, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
+            # if(LED_intensity>0):
+            #     cv2.putText(image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # else:
+            #     cv2.putText(image, 'Light OFF', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+
+
+
+
+
             cv2.line(image, (self.imW-int((250/1000)*(314/(self.imW/720)))-20,self.imH-20),(self.imW-20,self.imH-20),color =(255,255,255),thickness = 3,lineType = cv2.LINE_AA)
 
         self.image_widget.refresh_image(image)
@@ -177,8 +187,13 @@ class VideoWindow(QtWidgets.QWidget):
         
     def initialize_image_names(self,image_names):
         self.Image_Names=image_names
+        
         if len(self.Image_Names)>0:
             self.refreshImage(self.Image_Names[0])
+
+    # def initialize_led_intensity(self, led_intensity):
+    #     self.LED_intensity = led_intensity
+
         
     def initialize_image_time(self,image_time):
         self.Image_Time=image_time
