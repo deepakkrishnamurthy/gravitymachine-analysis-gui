@@ -30,6 +30,7 @@ import matplotlib.colors as Colors
 import rangeslider_functions
 import cv2
 import PIV_Functions
+import scipy.interpolate as interpolate
 imp.reload(PIV_Functions)
 
 #==============================================================================
@@ -759,7 +760,7 @@ class gravMachineTrack:
 
 # Centric diatom
 
-path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
+path = '/Volumes/DEEPAK-SSD 1/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
 
 
 # Noctiluca
@@ -999,37 +1000,59 @@ plt.show()
 
 Residue = pd.rolling_mean(Residue, window=10)
 
-# Detect the peaks in the Residual time series
-peaks= scipy.signal.find_peaks(Residue, distance=None,width=None,prominence=(0.1,20))
 
-peaks = peaks[0]
+# Pickle the peak locations for future use
 
-peaks_neg= scipy.signal.find_peaks(-Residue, distance=None,width=1,prominence=(0.1,20))
+saveFile = 'peak_locs.pkl'
 
-peaks_neg = peaks_neg[0]
+overwrite = False
 
-peak_indicator = []
-peak_neg_indicator = []
-   
-for j in peaks:
-    peak_indicator.append(j)
+if(not os.path.exists(os.path.join(path, saveFile)) or overwrite == True):
     
-for j in peaks_neg:
-    peak_neg_indicator.append(j)
+
+    # Detect the peaks in the Residual time series
+    peaks= scipy.signal.find_peaks(Residue, distance=None,width=None,prominence=(0.1,20))
     
-missingPeakloc = 78152
-
-Time_index = Time_loc.keys()
-
-index = int(np.squeeze(np.where(Time_index==missingPeakloc)))
-
-print(index)    
-
-peak_neg_indicator.append(index)
-peak_neg_indicator.sort()
-print(len(peak_indicator))
-print(len(peak_neg_indicator))
+    peaks = peaks[0]
     
+    peaks_neg= scipy.signal.find_peaks(-Residue, distance=None,width=1,prominence=(0.1,20))
+    
+    peaks_neg = peaks_neg[0]
+    
+    peak_indicator = []
+    peak_neg_indicator = []
+       
+    for j in peaks:
+        peak_indicator.append(j)
+        
+    for j in peaks_neg:
+        peak_neg_indicator.append(j)
+        
+    missingPeakloc = 78152
+    
+    Time_index = Time_loc.keys()
+    
+#    Time_index = track.df['Time'].keys()
+    
+    index = int(np.squeeze(np.where(Time_index==missingPeakloc)))
+    
+    print(index)    
+    
+    peak_neg_indicator.append(index)
+    peak_neg_indicator.sort()
+    print(len(peak_indicator))
+    print(len(peak_neg_indicator))
+    
+    with open(os.path.join(path,saveFile),'wb') as f:
+        pickle.dump((peak_indicator, peak_neg_indicator), f)
+        
+else:
+    
+    with open(os.path.join(path, saveFile),'rb') as f:
+        peak_indicator, peak_neg_indicator = pickle.load(f)
+    
+
+
     
     
 fig, ax0 = plt.subplots()
@@ -1044,6 +1067,18 @@ ax0.set_ylabel('Displacement (z) mm')
 plt.show()
 
 
+# Calculate the velocity during slow and fast sinking compute statistics
+
+Time_loc = np.array(Time_loc)
+mask = np.zeros(len(track.V_objFluid), dtype='bool')
+
+Blink_durations = []
+Blink_intervals = []
+for jj in range(0,len(peak_neg_indicator)-1):  
+
+    mask[peak_indicator[jj] : peak_neg_indicator[jj+1]] = 1
+    Blink_durations.append(Time_loc[peak_neg_indicator[jj+1]] - Time_loc[peak_indicator[jj]])
+    Blink_intervals.append(Time_loc[peak_indicator[jj+1]] - Time_loc[peak_neg_indicator[jj]])
 
 
 fig, (ax0,ax1) = plt.subplots(figsize=(12,16),nrows=2,sharex=True)
@@ -1069,7 +1104,7 @@ for jj in range(0,len(peak_neg_indicator)-1):
 #ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
 
 ax1.set_ylabel('Velocity (z) mm/s')
-ax1.set_xlim(40, 400)
+#ax1.set_xlim(40, 400)
 #ax1.set_ylim(np.min(track.V_objFluid), np.max(track.V_objFluid))
 
 
@@ -1091,9 +1126,89 @@ ax0 = sns.distplot(track.V_objFluid[~np.isnan(track.V_objFluid)],  kde = True , 
 
 
 
+V_fast_mean = np.nanmean(track.V_objFluid[mask])
+    
+V_fast_std = np.nanstd(track.V_objFluid[mask])
 
+V_slow_mean = np.nanmean(track.V_objFluid[~mask])
+    
+V_slow_std = np.nanstd(track.V_objFluid[~mask])
+
+
+mean_blink_durations = np.nanmean(Blink_durations)
+
+std_blink_durations = np.nanstd(Blink_durations)
+
+mean_blink_intervals = np.nanmean(Blink_intervals)
+
+std_blink_intervals = np.nanstd(Blink_intervals)
 
     
+
+# Align the vertical velocity traces at the transition points to observe the mean behavior
+T_len = 200
+
+
+slow_fast = pd.DataFrame({'Time':[], 'Transition type':[],'Vertical velocity':[]})
+fast_slow = pd.DataFrame({'Time':[], 'Transition type':[],'Vertical velocity':[]})
+
+halfSize = int(T_len/2)
+
+
+Time_loc_interp = np.linspace(Time_loc[0], Time_loc[-1],len(Time_loc))
+
+func_V = interpolate.interp1d(Time_loc, track.V_objFluid[:-1], kind = 'linear')
+
+V_fluid_interp = func_V(Time_loc_interp)
+
+plt.figure()
+
+for index in peak_indicator:
+    
+#    if(index - halfSize > 0 and index + halfSize < len(Time_loc)):
+        
+    T_aligned = Time_loc_interp[index - halfSize : index + halfSize] - Time_loc_interp[index]
+    V_aligned = V_fluid_interp[index - halfSize : index + halfSize]
+    
+    transition_type = np.repeat(['Slow-fast'],len(T_aligned))
+    
+    slow_fast = slow_fast.append(pd.DataFrame({'Time':T_aligned, 'Transition type':transition_type, 'Vertical velocity':V_aligned}))
+      
+    plt.scatter(T_aligned, V_aligned,20, alpha = 0.5)
+    
+
+plt.show()
+        
+plt.figure()
+for index in peak_neg_indicator:
+    
+#    if(index - halfSize > 0 and index + halfSize < len(Time_loc)):
+        
+    T_aligned = Time_loc_interp[index - halfSize : index + halfSize] - Time_loc_interp[index]
+    V_aligned = V_fluid_interp[index - halfSize : index + halfSize]
+    
+    transition_type = np.repeat(['Fast-slow'],len(T_aligned))
+    
+    fast_slow = fast_slow.append(pd.DataFrame({'Time':T_aligned, 'Transition type':transition_type, 'Vertical velocity':V_aligned}))
+      
+    plt.scatter(T_aligned, V_aligned,20, alpha = 0.5)
+    
+    
+plt.show()
+
+        
+        
+        
+# Plot the aligned velocity traces
+        
+plt.figure()
+sns.lineplot(x='Time', y = 'Vertical velocity', data = slow_fast)
+plt.show()
+    
+plt.figure()
+sns.lineplot(x='Time', y = 'Vertical velocity', data = fast_slow)
+plt.show()    
+
     
 
 

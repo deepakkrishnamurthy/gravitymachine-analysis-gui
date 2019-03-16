@@ -282,8 +282,8 @@ else:
 #--------------------------------------------------------------------------
 # PLOTS
 #--------------------------------------------------------------------------
-Organism1 = 'Noctiluca7'
-Organism2 = 'Star Diatom'
+Organism1 = 'Snail'
+#Organism2 = 'Star Diatom'
 
 #saveSubFolder = os.path.join(save_root, Organism)
 #
@@ -294,8 +294,8 @@ my_pal = {'VelocityZ_noWall': 'b' ,'VelocityX_noWall': 'r'}
 color_list = sns.color_palette("RdBu_r", 7)
 #my_pal = {'VelocityZ_noWall': color_list[0] ,'VelocityX_noWall': color_list[6]}
 
-xlim1 = -0.2
-xlim2 = 0.2
+xlim1 = -2
+xlim2 = 2
 decimals = 1
 ##--------------------------------------------------------------------------
 ## Distplot of the velocity distributions
@@ -330,9 +330,9 @@ decimals = 1
 ##--------------------------------------------------------------------------
 plt.figure(figsize=(4.5,4))
 ax0 = sns.distplot(dataFrame_full.loc[dataFrame_full["Organism"] == Organism1,"VelocityZ"],  kde = True , color = 'b', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
-ax0 = sns.distplot(dataFrame_full.loc[dataFrame_full["Organism"] == Organism2,"VelocityZ"],  kde = True , color = 'k', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
+#ax0 = sns.distplot(dataFrame_full.loc[dataFrame_full["Organism"] == Organism2,"VelocityZ"],  kde = True , color = 'k', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
 
-#ax1 = sns.distplot(dataFrame_full.loc[dataFrame_full["Organism"] == Organism,"VelocityX"],  kde = True , color = 'r', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vx'})  
+ax1 = sns.distplot(dataFrame_full.loc[dataFrame_full["Organism"] == Organism1,"VelocityX"],  kde = True , color = 'r', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vx'})  
 
 plt.xlim([xlim1, xlim2])
 plt.xticks(np.round(np.linspace(xlim1,xlim2,5), decimals=decimals))
