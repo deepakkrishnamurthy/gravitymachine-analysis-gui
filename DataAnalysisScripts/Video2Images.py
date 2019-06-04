@@ -18,10 +18,21 @@ import os
 
 #VideoFolder = '/Users/deepak/Dropbox/GravityMachine/ExperimentResults/AbioticExperiments'
 
-VideoFolder = 'L:/GravityMachine/DissolvingCrystals'
+#VideoFolder = 'L:/GravityMachine/DissolvingCrystals'
 
-VideoFile = 'MVI_1916.MOV'
+#VideoFolder = '/Volumes/DEEPAK-SSD/GravityMachine/AbioticExperiments/SedimentingBeads'
+
+#VideoFolder = '/Users/deepak/Dropbox/MiscData'
+
+VideoFolder = '/Volumes/GRAVMACH1/GravityMachine/SedimentingGlassBeads_2017'
+
+
+
+#VideoFile = 'MVI_1916.MOV'
 #VideoFile = 'InfiniteBeadDance.MOV'
+#VideoFile = 'StablePair_Trimmed.MOV'
+
+VideoFile = 'StableParticlePairsMVI_1902.MOV'
 
 VideoSaveFolder = os.path.join(VideoFolder,'images')
 
@@ -47,11 +58,11 @@ while(cap.isOpened()):
     # Capture frame-by-frame
     ret, frame = cap.read()
 
-    if(imgCounter == 0):
-        r = chooseROI(frame)
-        frame = frame[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
-    elif(r is not 0):
-        frame = frame[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
+#    if(imgCounter == 0):
+#        r = chooseROI(frame)
+#        frame = frame[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
+#    elif(r is not 0):
+#        frame = frame[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
         
         
         

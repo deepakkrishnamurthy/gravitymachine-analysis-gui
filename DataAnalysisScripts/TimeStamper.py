@@ -57,15 +57,18 @@ def main():
     #--------------------------------------------------------------------------
 #    path = '/Volumes/GRAVMACH1/HopkinsEmbroyologyCourse_GoodData/2018_06_14/Noctiluca/Noctilica7'
 
-    path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
+#    path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
    
+    path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div'
 
     #------------------------------------------------------------------------------
     # Folder in which images are stored
     #------------------------------------------------------------------------------
     # If analyzing original images
     #------------------------------------------------------------------------------
-    imageFolder = '/Volumes/DEEPAK-SSD/GravityMachine/MovieRawFiles/Centric_Diatom_small_40_240/Images_GS'
+    imageFolder = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div/Cropped'
+#    imageFolder = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div/RegisteredProcessed'
+#    imageFolder = '/Volumes/DEEPAK-SSD/GravityMachine/MovieRawFiles/Centric_Diatom_small_40_240/Images_GS'
 #    imageFolder = os.path.join(path,'images')
 #    imageFolder = '/Volumes/GRAVMACH1 2/GravityMachine/Results/PIV_Results/seacucmber9_Auto_IMG_33743_33971_Registered'
     #------------------------------------------------------------------------------
@@ -115,7 +118,7 @@ def main():
     
     rootImageFolder, folderName = os.path.split(imageFolder)
     # Choose the track to analyze
-    TrackName = 'track.csv'
+    TrackName = 'track_division.csv'
     
     
     
@@ -125,8 +128,8 @@ def main():
     if(not os.path.exists(savePath)):
         os.makedirs(savePath)
     
-    Tmin = 39
-    Tmax = 250
+    Tmin = 0
+    Tmax = 0
     Track1 = Track.GravMachineTrack(path,TrackName,Tmin,Tmax)
     
     
@@ -175,6 +178,7 @@ def main():
         FilesList = os.listdir(imageFolder)
         FilesList.sort()
         print(FilesList)
+        FilesList = FilesList[1:]
         
         print(Track1.Time[0])
         
@@ -183,9 +187,10 @@ def main():
         imgName_start = FilesList[0] 
         imgName_end = FilesList[-1]
         
-        
+        print(50*'-')
         print(imgName_start)
         print(imgName_end)
+        print(50*'-')
         
         startIndex,*rest = np.where(Track1.ImageName == imgName_start)
         stopIndex, *rest = np.where(Track1.ImageName == imgName_end)
@@ -257,7 +262,7 @@ def main():
             frame_clahe = clahe.apply(frame_gs)
     
     
-            cv2.putText(img = frame_clahe, text = str(np.round(Time, decimals = 2)) + ' s', org = (30, 30), fontFace = font, fontScale=1, color = (255, 255, 255), thickness = 2,lineType = cv2.LINE_AA)
+            cv2.putText(img = frame_clahe, text = str(np.round(Time, decimals = 2)) + ' s', org = (10, 20), fontFace = font, fontScale=0.75, color = (255, 255, 255), thickness = 2,lineType = cv2.LINE_AA)
     
     #        plt.clf()
             cv2.imshow('frame',frame_clahe)

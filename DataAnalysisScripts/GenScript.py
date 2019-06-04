@@ -26,6 +26,8 @@ path = '/Volumes/GRAVMACH1/HopkinsEmbroyologyCourse_GoodData/2018_06_11/Dendrast
 
 path = '/Volumes/GRAVMACH1/Hopkins_2018_08_31/MarSno2'
 
+path = '/Users/deepak/Dropbox/GravityMachine/FocusTracking/StaticTest'
+
 Tmin = 0
 Tmax = 0
 ###

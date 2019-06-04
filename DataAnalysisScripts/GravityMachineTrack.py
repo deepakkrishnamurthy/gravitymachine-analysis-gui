@@ -137,22 +137,29 @@ class gravMachineTrack:
         
 #        self.computeDisplacement()
         
-        self.createImageIndex()
-        
-#        self.setColorThresholds()
-        
-        
-        # PIV parameters
-        self.window_size = 64
-        self.overlap = 32
-        self.searchArea = 64
-        
- 
-        self.pixelPermm =  314*(self.imW/720)   # Pixel per mm for TIS camera (DFK 37BUX273) and 720p images
-        
-        self.mmPerPixel = 1/self.pixelPermm
-        
-        print('Pixels per mm: {}'.format(self.pixelPermm))
+        try:
+            
+            self.createImageIndex()
+            
+    #        self.setColorThresholds()
+            
+            
+            # PIV parameters
+            self.window_size = 64
+            self.overlap = 32
+            self.searchArea = 64
+            
+     
+            self.pixelPermm =  314*(self.imW/720)   # Pixel per mm for TIS camera (DFK 37BUX273) and 720p images
+            
+            self.mmPerPixel = 1/self.pixelPermm
+            
+            print('Pixels per mm: {}'.format(self.pixelPermm))
+            
+        except:
+            
+            print('Warning: No images found corresponding to track data')
+                
         
 #        self.findOrgDims(circle=1)
         

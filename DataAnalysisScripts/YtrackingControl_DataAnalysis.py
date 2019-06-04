@@ -42,12 +42,13 @@ def computeRelativeError(track):
     plt.plot(Time, YstageMoving,color = 'k',label='Target stage')
     plt.scatter(Time, YstageTracking, 10,color='r',label = 'Tracking stage')
     
-    plt.title('Lens amplitude {} mm, Lens gain: {}, Rel error: {} %'.format(track.liqLensAmp[0], track.liqLensGain[0],100*RMS_error/maxError))
+    plt.title('Lens amplitude {} mm, Lens gain: {}, Rel error: {} %'.format(track.liqLensAmp[0], track.liqLensGain[0],RMS_error))
     plt.xlabel('Elapsed Time (s)')
     plt.ylabel('Stage Displacement (mm)') 
     plt.legend()
     
-    return RMS_error/maxError
+    # Changed the error to just the RMS  error
+    return RMS_error
 
 #def main():
     
@@ -105,6 +106,8 @@ print(df_mean)
 
 RelErrors = np.array(df_mean.as_matrix())
 
+
+
 Amplitudes = np.array(df_mean.index.values)
 Gains = np.array(df_mean.columns.values)
 
@@ -116,7 +119,7 @@ im = ax.scatter(Gains_matrix, Amp_matrix, c = RelErrors, s = 250*RelErrors,vmin=
 ax.set_xlabel('Liquid lens gain')
 ax.set_label('Liquid lens amplitude (mm)')
 cbar = fig.colorbar(im, ax=ax)
-cbar.ax.set_ylabel('Relative Tracking Error')
+cbar.ax.set_ylabel('RMS Error')
 ax.set_xscale('log')
 ax.set_yscale('log')
 #ax.set_ylim([0.04, 0.21])
