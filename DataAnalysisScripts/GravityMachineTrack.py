@@ -28,6 +28,8 @@ import seaborn as sns
 import matplotlib.colors as Colors
 import rangeslider_functions
 import cv2
+from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
+
 import PIV_Functions
 imp.reload(PIV_Functions)
 
@@ -46,9 +48,11 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label = None):
 
 class gravMachineTrack:
 
-    def __init__(self, path, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time'):
+    def __init__(self, root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time'):
         
-        self.path = path
+        self.path = None
+        
+        self.root = root
         
         self.openFile()
         
@@ -170,7 +174,11 @@ class gravMachineTrack:
         
         
     def openFile(self):
+        
+        self.path = QtGui.QFileDialog.getExistingDirectory(None)
+        
         print('Opening dataset ...')
+        
 
         self.image_dict = {}
         
@@ -209,7 +217,10 @@ class gravMachineTrack:
 #                    
 #                self.trackFile = trackFileNames[file_no-1]
                 
-                self.trackFile = 'track_cropped.csv'
+#                self.trackFile = 'track_cropped.csv'
+                
+                self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
+                self.trackFile, *rest = os.path.split(self.trackFile)
                 print('Loaded {}'.format(self.trackFile))
                 
 #                
@@ -221,9 +232,7 @@ class gravMachineTrack:
 #                        self.trackFile = tracks
 #                        print('Loaded {}'.format(self.trackFile))
 
-            else:
-                self.trackFile = trackFileNames[0]
-                print('Loaded {}'.format(self.trackFile))
+            
                 
     def initializeTracker(self, tracker_type):
         major_ver, minor_ver, subminor_ver = cv2.__version__.split('.')

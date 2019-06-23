@@ -10,28 +10,24 @@ import GravityMachineTrack
 imp.reload(GravityMachineTrack)
 import cv2
 import sys
-import pims
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
+path = 'G:/GM-data/Wailesii_2019_05_21/dividing'
 
-path = '/Volumes/GRAVMACH1/HopkinsEmbroyologyCourse_GoodData/2018_06_11/Dendraster_starved_11Days_nofood/Dendraster3'
- 
 
-#path = '/Volumes/GRAVMACH1/HopkinsEmbroyologyCourse_GoodData/2018_06_12/Starfish/StarFish6'
 
-# Marine snow
 
-path = '/Volumes/GRAVMACH1/Hopkins_2018_08_31/MarSno2'
 
-path = '/Users/deepak/Dropbox/GravityMachine/FocusTracking/StaticTest'
 
 Tmin = 0
 Tmax = 0
 ###
-track = GravityMachineTrack.gravMachineTrack(path, Tmin, Tmax)
+rootDir = 'C:\Users\Hongquan\Documents\GravityMachineAnalysis\GravityMachineAnalysis'
+
+track = GravityMachineTrack.gravMachineTrack(root = rootDir,  Tmin, Tmax)
 
 mean_vel_z = np.nanmean(track.Vz)
 std_vel_z = np.nanstd(track.Vz)
