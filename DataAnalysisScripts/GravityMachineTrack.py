@@ -52,8 +52,6 @@ class gravMachineTrack:
         
         self.path = None
         
-        self.root = root
-        
         self.openFile()
         
         self.imgFormat = '.svg'
@@ -175,63 +173,70 @@ class gravMachineTrack:
         
     def openFile(self):
         
-        self.path = QtGui.QFileDialog.getExistingDirectory(None)
+        self.path = QtGui.QFileDialog.getExistingDirectory(None, "Open dataset folder")
+        
+        
         
         print('Opening dataset ...')
         
-
-        self.image_dict = {}
+        print("Path : {}".format(self.path))
         
-        trackFileNames = []
-        if os.path.exists(self.path):
-
-            # Walk through the folders and identify ones that contain images
-            for dirs, subdirs, files in os.walk(self.path, topdown=False):
-               
-                root, subFolderName = os.path.split(dirs)
-                    
-                print(subFolderName[0:6])
-                if('images' in subFolderName):
+        
+        if(len(self.path)>0):
+            self.image_dict = {}
+            
+            trackFileNames = []
+            if os.path.exists(self.path):
+    
+                # Walk through the folders and identify ones that contain images
+                for dirs, subdirs, files in os.walk(self.path, topdown=False):
                    
-                   for fileNames in files:
-                       key = fileNames
-                       value = subFolderName
-                       self.image_dict[key]=value
-
-                if(os.path.normpath(dirs) == os.path.normpath(self.path)):
-                    for fileNames in files:
-                        if('.csv' in fileNames):
-                            trackFileNames.append(fileNames)
-
-            if(len(trackFileNames)==0):
-                raise FileNotFoundError('CSV track was not found!')      
-            elif(len(trackFileNames)>1):
-                print('More than one .csv file found!')
-                
-#                for ii, filename in enumerate(trackFileNames):
-#                    
-#                    print('{}: {} \n'.format(ii+1, filename))
-#                    
-#                print('Choose the file to use:')
-#                file_no = int(input())
-#                    
-#                self.trackFile = trackFileNames[file_no-1]
-                
-#                self.trackFile = 'track_cropped.csv'
-                
-                self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
-                self.trackFile, *rest = os.path.split(self.trackFile)
-                print('Loaded {}'.format(self.trackFile))
-                
-#                
-#                for tracks in trackFileNames:
-#                    if('division' in tracks):
-#                        self.trackFile = tracks
-#                        print('Loaded {}'.format(self.trackFile))
-#                    elif('mod' in tracks):
-#                        self.trackFile = tracks
-#                        print('Loaded {}'.format(self.trackFile))
-
+                    root, subFolderName = os.path.split(dirs)
+                        
+                    print(subFolderName[0:6])
+                    if('images' in subFolderName):
+                       
+                       for fileNames in files:
+                           key = fileNames
+                           value = subFolderName
+                           self.image_dict[key]=value
+    
+                    if(os.path.normpath(dirs) == os.path.normpath(self.path)):
+                        for fileNames in files:
+                            if('.csv' in fileNames):
+                                trackFileNames.append(fileNames)
+    
+                if(len(trackFileNames)==0):
+                    raise FileNotFoundError('CSV track was not found!')      
+                elif(len(trackFileNames)>=1):
+                    print('Choose the track file to use!')
+                    
+    #                for ii, filename in enumerate(trackFileNames):
+    #                    
+    #                    print('{}: {} \n'.format(ii+1, filename))
+    #                    
+    #                print('Choose the file to use:')
+    #                file_no = int(input())
+    #                    
+    #                self.trackFile = trackFileNames[file_no-1]
+                    
+    #                self.trackFile = 'track_cropped.csv'
+                    
+                    trackFile,*rest = QtGui.QFileDialog.getOpenFileName(None, 'Open track file',self.path,"CSV fles (*.csv)")
+                    print(trackFile)
+                    head,self.trackFile = os.path.split(trackFile)
+                    print('Loaded {}'.format(self.trackFile))
+                    
+    #                
+    #                for tracks in trackFileNames:
+    #                    if('division' in tracks):
+    #                        self.trackFile = tracks
+    #                        print('Loaded {}'.format(self.trackFile))
+    #                    elif('mod' in tracks):
+    #                        self.trackFile = tracks
+    #                        print('Loaded {}'.format(self.trackFile))
+        else:
+            print("No dataset chosen")
             
                 
     def initializeTracker(self, tracker_type):

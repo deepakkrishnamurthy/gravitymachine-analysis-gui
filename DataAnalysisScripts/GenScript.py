@@ -15,19 +15,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
-path = 'G:/GM-data/Wailesii_2019_05_21/dividing'
-
-
-
 
 
 
 Tmin = 0
 Tmax = 0
 ###
-rootDir = 'C:\Users\Hongquan\Documents\GravityMachineAnalysis\GravityMachineAnalysis'
 
-track = GravityMachineTrack.gravMachineTrack(root = rootDir,  Tmin, Tmax)
+track = GravityMachineTrack.gravMachineTrack(Tmin = Tmin, Tmax = Tmax)
 
 mean_vel_z = np.nanmean(track.Vz)
 std_vel_z = np.nanstd(track.Vz)
