@@ -28,7 +28,10 @@ import seaborn as sns
 import matplotlib.colors as Colors
 import rangeslider_functions
 import cv2
-from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
+from tkinter import filedialog
+from tkinter import *
+from scipy.ndimage.filters import uniform_filter1d
+
 
 import PIV_Functions
 imp.reload(PIV_Functions)
@@ -50,6 +53,7 @@ class gravMachineTrack:
 
     def __init__(self, root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False):
         
+    
         self.overwrite_piv = overwrite_piv
         self.overwrite_velocity = overwrite_velocity
         self.Tmin = Tmin
@@ -124,7 +128,7 @@ class gravMachineTrack:
         self.df = self.df.set_index(df_index)
         
         
-#        self.df['ZobjWheel'] = self.df['ZobjWheel'] - self.df['ZobjWheel'][0]
+        self.df['ZobjWheel'] = self.df['ZobjWheel'] - self.df['ZobjWheel'][0]
         
         self.trackLen = len(self.df)
         
@@ -188,9 +192,15 @@ class gravMachineTrack:
         
     def openFile(self):
         
-        self.path = QtGui.QFileDialog.getExistingDirectory(None, "Open dataset folder")
-        
         print('Opening dataset ...')
+        
+
+        filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("CSV files","*.csv"),("all files","*.*")))
+        
+        self.path, self.trackFile = os.path.split(filename)        
+#        self.path = QtGui.QFileDialog.getExistingDirectory(None, "Open dataset folder")
+        
+        
         
         print("Path : {}".format(self.path))
         
@@ -218,15 +228,15 @@ class gravMachineTrack:
                             if('.csv' in fileNames):
                                 trackFileNames.append(fileNames)
     
-                if(len(trackFileNames)==0):
-                    raise FileNotFoundError('CSV track was not found!')      
-                elif(len(trackFileNames)>=1):
-                    print('Choose the track file to use!')
-                                        
-                    trackFile,*rest = QtGui.QFileDialog.getOpenFileName(None, 'Open track file',self.path,"CSV fles (*.csv)")
-                    print(trackFile)
-                    head,self.trackFile = os.path.split(trackFile)
-                    print('Loaded {}'.format(self.trackFile))
+#                if(len(trackFileNames)==0):
+#                    raise FileNotFoundError('CSV track was not found!')      
+#                elif(len(trackFileNames)>=1):
+#                    print('Choose the track file to use!')
+#                                        
+#                    trackFile,*rest = QtGui.QFileDialog.getOpenFileName(None, 'Open track file',self.path,"CSV fles (*.csv)")
+#                    print(trackFile)
+#                    head,self.trackFile = os.path.split(trackFile)
+#                    print('Loaded {}'.format(self.trackFile))
 
         else:
             print("No dataset chosen")
@@ -589,10 +599,10 @@ class gravMachineTrack:
             maskInsideCircle = PIV_Functions.pointInCircle(x,y,x_cent,y_cent,scaleFactor*radius)
             u_farfield, v_farfield = (u[~maskInsideCircle], v[~maskInsideCircle])
             
-            print(x_cent, y_cent)
-            print(radius)
-            
-            print(maskInsideCircle)
+#            print(x_cent, y_cent)
+#            print(radius)
+#            
+#            print(maskInsideCircle)
             
 #            plt.figure(1)
 ##            plt.scatter(x_cent, y_cent, 'ro')
@@ -601,9 +611,9 @@ class gravMachineTrack:
 #            plt.show()
             
             
-            plt.figure(2)
-            cv2.circle(frame_a_gs,(int(x_cent), int(y_cent)),int(scaleFactor*radius), color = (0,255,0))
-            cv2.imshow('frame',frame_a_gs)
+#            plt.figure(2)
+#            cv2.circle(frame_a_gs,(int(x_cent), int(y_cent)),int(scaleFactor*radius), color = (0,255,0))
+#            cv2.imshow('frame',frame_a_gs)
 #            cv2.waitKey(1)
        
         else:
@@ -741,11 +751,13 @@ class gravMachineTrack:
     def smoothSignal(self, data, window_time):      # Window is given in seconds
             
             avgWindow = int(window_time*self.samplingFreq)
-            
-    #        if(pd.__version__ is not '0.20.3'):
-    #            return data.rolling(avgWindow).mean()
-    #        else:
-            return pd.rolling_mean(data, avgWindow, min_periods = 1, center = True)
+            return uniform_filter1d(data, size = avgWindow, mode="wrap")
+#            data = pd.Series(data)
+#            rolling_mean = np.array(data.rolling(window = avgWindow, center = True).mean())
+##            try:
+#            return rolling_mean
+#            except:
+#                return pd.rolling_mean(data, avgWindow, min_periods = 1, center = True)
         
         
     def correctedDispVelocity(self, overwrite_flag = False):
