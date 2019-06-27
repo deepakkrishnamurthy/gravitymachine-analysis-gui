@@ -51,9 +51,11 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label = None):
 
 class gravMachineTrack:
 
-    def __init__(self, root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False):
+    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False):
         
-    
+        self.Organism = organism
+        self.Condition = condition
+
         self.overwrite_piv = overwrite_piv
         self.overwrite_velocity = overwrite_velocity
         self.Tmin = Tmin
@@ -65,10 +67,10 @@ class gravMachineTrack:
         self.path = None
         
         # Opens a Folder and File dialog for choosing the dataset for analysis
-        self.openFile()
+        self.openFile(fileName = fileName)
         
         self.imgFormat = '.svg'
-        self.root, self.Organism = os.path.split(self.path)
+        self.root, *rest = os.path.split(self.path)
         
         # Read the CSV file as a pandas dataframe
         self.df = pd.read_csv(os.path.join(self.path, self.trackFile))
@@ -190,16 +192,18 @@ class gravMachineTrack:
             self.correctedDispVelocity(overwrite_flag=self.overwrite_velocity)
         
         
-    def openFile(self):
+    def openFile(self, fileName = None):
         
         print('Opening dataset ...')
         
-
-        filename =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("CSV files","*.csv"),("all files","*.*")))
+        if(fileName is None):
+            fileName =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("CSV files","*.csv"),("all files","*.*")))
         
-        self.path, self.trackFile = os.path.split(filename)        
+
+        self.path, self.trackFile = os.path.split(fileName)        
 #        self.path = QtGui.QFileDialog.getExistingDirectory(None, "Open dataset folder")
         
+        self.analysis_save_path = os.path.join(self.path, self.trackFile[0:-4]+'_{}_{}'.format(round(self.Tmin), round(self.Tmax)) + '_analysis.csv')
         
         
         print("Path : {}".format(self.path))
@@ -240,6 +244,28 @@ class gravMachineTrack:
 
         else:
             print("No dataset chosen")
+
+    def saveAnalysisData(self, overwrite = True):
+
+        if(overwrite or os.path.exists(self.analysis_save_path)==False):
+            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Time':[],'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
+            
+            analysis_len = len(self.imageIndex_array)
+
+            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
+                
+            self.df_analysis.to_csv(self.analysis_save_path)
+
+        
+    def loadAnalysisData(self):
+
+        if(os.path.exists(self.analysis_save_path)):
+
+            self.df =  pd.read_csv(self.analysis_save_path)
+
+        else:
+
+            print('Analysis data does not exist!')
             
                 
     def initializeTracker(self, tracker_type):
@@ -506,7 +532,7 @@ class gravMachineTrack:
     def computeDisplacement(self, x_data = None, y_data = None):
         # Compute the displacement by integrating a velocity time series.
         
-        disp = scipy.integrate.cumtrapz(y = y_data, x = x_data)
+        disp = scipy.integrate.cumtrapz(y = y_data, x = x_data, initial = 0)
         
         return disp
 #        self.disp_z_computed = scipy.integrate.cumtrapz(y = self.Vz, x = self.df['Time'])
@@ -745,6 +771,24 @@ class gravMachineTrack:
         self.threshHigh = threshHigh
         
         print('Color thresholds for segmentation: \n LOW: {}, HIGH : {}'.format(self.threshLow, self.threshHigh))
+   
+        
+    def correctedDispVelocity(self, overwrite_flag = False):
+        
+        
+        self.FluidVelTimeSeries(overwrite_velocity = overwrite_flag)
+        
+        # Vz is the object velocity relative to the stage V_objStage
+        
+        Vz_stageLab = -self.Vz[self.imageIndex_array] + self.Vz_objLab[self.imageIndex_array]
+        
+        Vz_fluidStage = self.v_avg_array - Vz_stageLab
+        
+        self.Vz_objFluid = self.Vz[self.imageIndex_array] - Vz_fluidStage
+        
+        self.Z_objFluid =  self.computeDisplacement(x_data = self.df['Time'][self.imageIndex_array], y_data = self.Vz_objFluid)
+      
+
     #--------------------------------------------------------------------------       
     # Signal Processing Functions
     #--------------------------------------------------------------------------       
@@ -758,25 +802,7 @@ class gravMachineTrack:
 #            return rolling_mean
 #            except:
 #                return pd.rolling_mean(data, avgWindow, min_periods = 1, center = True)
-        
-        
-    def correctedDispVelocity(self, overwrite_flag = False):
-        
-        
-        self.FluidVelTimeSeries(overwrite_velocity = overwrite_flag)
-        
-        # Vz is the object velocity relative to the stage V_objStage
-        
-        Vz_stageLab = -self.Vz[self.imageIndex_array] + self.Vz_objLab[self.imageIndex_array]
-        
-        
-        
-        Vz_fluidStage = self.v_avg_array - Vz_stageLab
-        
-        self.Vz_objFluid = self.Vz[self.imageIndex_array] - Vz_fluidStage
-        
-        self.Z_objFluid =  self.computeDisplacement(x_data = self.df['Time'][self.imageIndex_array], y_data = self.Vz_objFluid)
-        
+          
     def detectCells(self, start_image=0, stop_image=0):
         
         
