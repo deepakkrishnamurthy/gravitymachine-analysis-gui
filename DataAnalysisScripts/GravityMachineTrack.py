@@ -79,11 +79,17 @@ class gravMachineTrack:
         
         print(self.ColumnNames)
         
+        # X position of object (wrt lab)
+        self.Xobj_name = 'Xobj'
+        # Y position of object (wrt lab)
+        self.Yobj_name = 'Yobj'
         # X position relative to image center
-        self.Xobj_name = self.ColumnNames[1]
-        self.Yobj_name = self.ColumnNames[2]
+        self.Xobj_name = 'Xobj_image'
         # Z position relative to image center
-        self.Zobj_name = self.ColumnNames[3]
+        self.Zobj_name = 'Zobj'
+        
+
+        
         
         # Make T=0 as the start of the track
         self.df['Time'] = self.df['Time'] - self.df['Time'][0]
