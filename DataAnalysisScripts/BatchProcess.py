@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 #get_ipython().run_line_magic('matplotlib', 'inline')
 from tkinter import filedialog
 import pandas as pd
+import os, time
 
 batch_file = "C:/Users/Hongquan/Documents/BatchFile.csv"
 
@@ -31,13 +32,17 @@ for ii in range(len(df_batch)):
     Condition = df_batch['Condition'][ii]
     Size = df_batch['Size'][ii]
     
+    LocalTime = time.ctime(os.path.getmtime(FileName))
+    
+    TrackDescription = df_batch['Track description']
+    
     print(Tmin)
     print(Tmax)
     print(FileName)
     print(Organism)
     print(Condition)
     print(Size)
-    track = GravityMachineTrack.gravMachineTrack(fileName = FileName, organism = Organism, condition = Condition, Tmin = Tmin, Tmax = Tmax, computeDisp = True, orgDim = Size, overwrite_piv=False, overwrite_velocity=False)
+    track = GravityMachineTrack.gravMachineTrack(fileName = FileName, organism = Organism, condition = Condition, Tmin = Tmin, Tmax = Tmax, computeDisp = True, orgDim = Size, overwrite_piv=False, overwrite_velocity=False, localTime = LocalTime, trackDescription = TrackDescription)
 #
     track.saveAnalysisData(overwrite = True)
 

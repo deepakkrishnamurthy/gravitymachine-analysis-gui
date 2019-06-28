@@ -51,10 +51,16 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label = None):
 
 class gravMachineTrack:
 
-    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False, scaleFactor = 20):
+    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False, scaleFactor = 20, localTime = 0, trackDescription = 'Normal'):
         
         self.Organism = organism
         self.Condition = condition
+        
+        # Local Time when the track was measured
+        self.localTime = localTime
+        
+        # Description of track (such as observed cell/organism state). Warning: This may be subjective. Mainly as a book-keeping utility
+        self.track_desc = trackDescription
 
         self.overwrite_piv = overwrite_piv
         self.overwrite_velocity = overwrite_velocity
@@ -255,11 +261,11 @@ class gravMachineTrack:
     def saveAnalysisData(self, overwrite = True):
 
         if(overwrite or os.path.exists(self.analysis_save_path)==False):
-            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Time':[],'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
+            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Local time':[],'Track description':[],'Time':[],'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
             
             analysis_len = len(self.imageIndex_array)
 
-            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
+            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len,axis = 0),'Track description':np.repeat(self.track_desc,axis = 0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
                 
             self.df_analysis.to_csv(self.analysis_save_path)
 
