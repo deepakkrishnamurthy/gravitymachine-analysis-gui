@@ -51,7 +51,7 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label = None):
 
 class gravMachineTrack:
 
-    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False):
+    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False, scaleFactor = 20):
         
         self.Organism = organism
         self.Condition = condition
@@ -84,7 +84,7 @@ class gravMachineTrack:
         # Y position of object (wrt lab)
         self.Yobj_name = 'Yobj'
         # X position relative to image center
-        self.Xobj_name = 'Xobj_image'
+        self.XobjImage_name = 'Xobj_image'
         # Z position relative to image center
         self.Zobj_name = 'Zobj'
         
@@ -181,6 +181,7 @@ class gravMachineTrack:
             
             print('Warning: No images found corresponding to track data')
                 
+        self.scaleFactor = scaleFactor
         if(findDims):
             self.findOrgDims(circle=1)
         else:
@@ -545,7 +546,7 @@ class gravMachineTrack:
         
         
 
-    def computeFluidVelocity(self, image_a, image_b, deltaT = 1, overwrite_piv = False, overwrite_velocity = False, masking = False, obj_position = None, obj_size = 0.1, scaleFactor = 10):
+    def computeFluidVelocity(self, image_a, image_b, deltaT = 1, overwrite_piv = False, overwrite_velocity = False, masking = False, obj_position = None, obj_size = 0.1):
         # Computes the mean fluid velocity, far away from objects, given a pair of images
                 
         #--------------------------------------------------------------------------
@@ -628,7 +629,7 @@ class gravMachineTrack:
                 x_cent, y_cent = obj_position
                 radius = round((self.OrgDim/2.0)*self.pixelPermm)
                 
-            maskInsideCircle = PIV_Functions.pointInCircle(x,y,x_cent,y_cent,scaleFactor*radius)
+            maskInsideCircle = PIV_Functions.pointInCircle(x,y,x_cent,y_cent,self.scaleFactor*radius)
             u_farfield, v_farfield = (u[~maskInsideCircle], v[~maskInsideCircle])
             
 #            print(x_cent, y_cent)
@@ -720,7 +721,7 @@ class gravMachineTrack:
                     
                     dT = self.df['Time'][imageindex_b] - self.df['Time'][imageindex_a]
                     
-                    self.u_avg_array[ii], self.v_avg_array[ii], self.u_std_array[ii], self.v_std_array[ii] = self.computeFluidVelocity(image_a,image_b,deltaT = dT, masking = True, obj_position = obj_position, obj_size = self.OrgDim, scaleFactor=10, overwrite_piv = self.overwrite_piv)
+                    self.u_avg_array[ii], self.v_avg_array[ii], self.u_std_array[ii], self.v_std_array[ii] = self.computeFluidVelocity(image_a,image_b,deltaT = dT, masking = True, obj_position = obj_position, obj_size = self.OrgDim, overwrite_piv = self.overwrite_piv)
                     self.imageIndex_array[ii] = imageindex_a
                     
                 # If either of those images do not exist, assume that the velocity remains constant over the missing frames
