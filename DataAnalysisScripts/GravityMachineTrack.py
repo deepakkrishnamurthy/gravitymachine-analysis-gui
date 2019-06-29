@@ -265,7 +265,7 @@ class gravMachineTrack:
             
             analysis_len = len(self.imageIndex_array)
 
-            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len,axis = 0),'Track description':np.repeat(self.track_desc,axis = 0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
+            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len,axis = 0),'Track description':np.repeat(self.track_desc, analysis_len, axis = 0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
                 
             self.df_analysis.to_csv(self.analysis_save_path)
 

@@ -42,6 +42,7 @@ class CSV_Reader(QtCore.QObject):
         self.index_max=0
         self.W =Width
         self.L = Length
+        self.df = None
     
     
     def computeSpeed(self,X,T):
@@ -61,29 +62,30 @@ class CSV_Reader(QtCore.QObject):
         trackPath = os.path.join(directory, self.file_name)
         
 
-        df = pd.read_csv(trackPath)
+        self.df = pd.read_csv(trackPath)
 
         self.ColumnNames = list(self.df.columns.values)
 
-        self.Time = np.array(df['Time'], dtype ='float')            # Time stored is in milliseconds
-        self.Xobjet = np.array(df['Xobj'], dtype ='float')             # Xpos in motor full-steps
-        self.Yobjet = np.array(df['Yobj'], dtype ='float')             # Ypos in motor full-steps
+        self.Time = np.array(self.df['Time'])            # Time stored is in milliseconds
+        self.Xobjet = np.array(self.df['Xobj'])             # Xpos in motor full-steps
+        self.Yobjet = np.array(self.df['Yobj'])             # Ypos in motor full-steps
         
         if('Xobj_image' in self.ColumnNames):
-            self.Xobj_image = np.array(df['Xobj_image'], dtype ='float')  
+            self.Xobj_image = np.array(self.df['Xobj_image'])  
 
-        Zobjet = np.array(df['Zobj'], dtype ='float')         # Zpos is in encoder units
+        Zobjet = np.array(self.df['Zobj'])         # Zpos is in encoder units
         
-        ThetaWheel = np.array(df['ThetaWheel'], dtype ='float')
+        ThetaWheel = np.array(self.df['ThetaWheel'])
 
 
-        self.ZobjWheel =  np.array(df['ZobjWheel'], dtype ='float')
+        self.ZobjWheel =  np.array(self.df['ZobjWheel'])
 
-        ManualTracking = np.array(df['Manual Tracking'], dtype ='int')
-        self.ImageNames = df['Image name']
-        focusMeasure = np.array(df['Focus Measure'], dtype ='float')
-        focusPhase = np.array(df['Liquid Lens Phase'], dtype ='float')
-        MaxfocusMeasure = np.array(df['Y FM maximum'],dtype = 'float')
+        ManualTracking = np.array(self.df['Manual Tracking'])
+        self.ImageNames = self.df['Image name']
+        print(self.ImageNames)
+        focusMeasure = np.array(self.df['Focus Measure'])
+        focusPhase = np.array(self.df['Liquid Lens Phase'])
+        MaxfocusMeasure = np.array(self.df['Y FM maximum'])
 
 
 
@@ -178,7 +180,7 @@ class CSV_Reader(QtCore.QObject):
         print('data sent')
         
     def send_image_time(self):
-        cropped_ImageNames=self.ImageNames[self.index_min:self.index_max+1]
+        cropped_ImageNames = self.ImageNames[self.index_min:self.index_max+1]
         cropped_Time=self.Time[self.index_min:self.index_max+1]
         # cropped_LED_intensity = self.LED_intensity[self.index_min:self.index_max+1]
         
@@ -188,7 +190,7 @@ class CSV_Reader(QtCore.QObject):
         # new_LED_intensity = []
         
         for i in range(len(cropped_ImageNames)):
-            if len(cropped_ImageNames[i])>0:
+            if cropped_ImageNames[i] is not np.nan:
                 ImageIndex.append(i)
                 new_ImageNames.append(cropped_ImageNames[i])
                 ImageTime.append(round(cropped_Time[i],2))
