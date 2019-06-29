@@ -39,7 +39,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.L = 30
 
         self.video_saver=VideoSaver()
-        self.isImageSaver=False #True: image_saver will be chose in place of video saver
+        self.isImageSaver=False  #True: image_saver will be chose in place of video saver
         
         #widgets
         self.video_window=VideoWindow()

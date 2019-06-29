@@ -291,7 +291,7 @@ class VideoWindow(QtWidgets.QWidget):
     def play_refresh(self):
         
         if(self.real_time == True):
-            timediff=time.time()-self.current_computer_time
+            timediff = time.time()-self.current_computer_time
             
             index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
             if index>self.positionSlider_prevValue:

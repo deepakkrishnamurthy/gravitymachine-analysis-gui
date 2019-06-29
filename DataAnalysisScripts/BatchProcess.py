@@ -34,7 +34,7 @@ for ii in range(len(df_batch)):
     
     LocalTime = time.ctime(os.path.getmtime(FileName))
     
-    TrackDescription = df_batch['Track description']
+    TrackDescription = df_batch['Track description'][ii]
     
     print(Tmin)
     print(Tmax)
