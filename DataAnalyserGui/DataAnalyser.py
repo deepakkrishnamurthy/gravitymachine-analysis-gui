@@ -33,6 +33,11 @@ class CentralWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         
+        # Channel width
+        self.W = 3
+        # Channel length
+        self.L = 30
+
         self.video_saver=VideoSaver()
         self.isImageSaver=True #True: image_saver will be chose in place of video saver
         
@@ -44,9 +49,9 @@ class CentralWidget(QtWidgets.QWidget):
         self.zplot=PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
         
         #Tool
-        self.csv_reader=CSV_Reader()
+        self.csv_reader=CSV_Reader(Width = self.W, Length = self.L)
         
-        self.plot3D=plot3D()
+        self.plot3D=plot3D(Width = self.W, Length = self.L)
         
         self.panVSlider = QtGui.QSlider(QtCore.Qt.Vertical)
         self.panVSlider.setRange(-400, 400)

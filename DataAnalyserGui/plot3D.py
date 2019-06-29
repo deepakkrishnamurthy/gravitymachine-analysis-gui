@@ -25,9 +25,12 @@ class plot3D(gl.GLViewWidget):
     
     reset_sliders=QtCore.pyqtSignal(int)
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, Width=3, Length = 30):
         super().__init__(parent)
         
+        self.Width = Width
+        self.Length = Length
+
         self.size_traj=0.12
         self.size_grid = 1
         self.size_marker = 1
@@ -110,10 +113,10 @@ class plot3D(gl.GLViewWidget):
         
         self.xygrid.translate(0, 0, self.Z.min())
         
-        self.yzgrid.setSize(newZsize,3,0)
+        self.yzgrid.setSize(newZsize,self.Width,0)
         self.yzgrid.translate(0, 0, 0.5*(newZsize-10)+self.Z.min())
         
-        self.xzgrid.setSize(15,newZsize,0)
+        self.xzgrid.setSize(self.Length,newZsize,0)
         self.xzgrid.translate(0, 0, 0.5*(newZsize-10)+self.Z.min())
         
     def generatePgColormap(self):
@@ -167,23 +170,23 @@ class plot3D(gl.GLViewWidget):
 
     def initialize_grid(self):
         self.xygrid = Gd.GLGridItem(color=self.grid_color,thickness=self.size_grid)
-        self.xygrid.setSize(15,3)
+        self.xygrid.setSize(self.Length,self.Width)
         self.xygrid.setSpacing(1,1,0)
-        self.xygrid.translate(0, 1.5, 0)
+        self.xygrid.translate(0, self.Width/2, 0)
         self.addItem(self.xygrid)
         
         self.yzgrid = Gd.GLGridItem(color=self.grid_color,thickness=self.size_grid)
         self.yzgrid.setSize(10,3)
         self.yzgrid.setSpacing(1,1,0)
         self.yzgrid.rotate(90, 0, 1, 0)
-        self.yzgrid.translate(7.5, 1.5, 5)
+        self.yzgrid.translate(self.Length/2, self.Width/2, 5)
         self.addItem(self.yzgrid)
         
         self.xzgrid = Gd.GLGridItem(color=self.grid_color,thickness=self.size_grid)
-        self.xzgrid.setSize(15,10)
+        self.xzgrid.setSize(self.Length,10)
         self.xzgrid.setSpacing(1,1,0)
         self.xzgrid.rotate(90, 1, 0, 0)
-        self.xzgrid.translate(0, 3, 5)
+        self.xzgrid.translate(0, self.Width, 5)
         self.addItem(self.xzgrid)
          
     def initialize_plot(self):
