@@ -15,7 +15,7 @@ Created on Fri Feb  8 11:55:48 2019
 import imp
 import GravityMachineTrack 
 imp.reload(GravityMachineTrack)
-import cv2
+#import cv2
 import sys
 import pims
 import numpy as np
@@ -57,12 +57,15 @@ rcParams.update({'font.size': 12})
 #path = '/Volumes/GRAVMACH1/VolvoxPhotoresponse/vvx25'
 
 # Centric diatom
-path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good' 
+#path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good' 
 
 
-rootFolder = '/Volumes/DEEPAK-SSD/GravityMachine/MovieRawFiles'
+path = '/Volumes/My Passport/GM-data/GM tracks for videos/Wailesii_Replete'
+trackfile = 'track000.csv'
 
-Folder = 'Centric_Diatom_small_40_240'
+rootFolder = '/Volumes/DEEPAK-1TB/GravityMachine/Diatoms/Videos_rawFiles'
+
+head, Folder = os.path.split(path)
 
 savePath= os.path.join(rootFolder, Folder)
 
@@ -70,7 +73,7 @@ if (not os.path.exists(savePath)):
     os.makedirs(savePath)
 
 T_start = 0
-T_end = 2700
+T_end = 10
 
 frame_start = 'IMG_0025604.tif'
 frame_end = 'IMG_0025833.tif'
@@ -78,21 +81,8 @@ frame_end = 'IMG_0025833.tif'
 indexing_method = 'time'
 #indexing_method = 'frame'
 
-if(indexing_method == 'time'):
-    track = GravityMachineTrack.gravMachineTrack(path, Tmin=T_start, Tmax=T_end, indexing = 'time')
+track = GravityMachineTrack.gravMachineTrack(organism = 'Wailesii', condition = 'Replete', Tmin = T_start, Tmax = T_end, computeDisp = True, orgDim = 0.1, overwrite_piv=False, overwrite_velocity=False, scaleFactor = 10, indexing = indexing_method)
 
-elif(indexing_method=='frame'):
-    track = GravityMachineTrack.gravMachineTrack(path, frame_min = frame_start, frame_max = frame_end, indexing='frame')
-
-track.correctedDispVelocity(overwrite_flag=False)
-
-peakFile = 'peakLocations.pkl'
-
-savePath_peak = os.path.join(path, peakFile)
-
-if(os.path.exists(savePath_peak)):
-    with open(savePath_peak, 'rb') as f:  # Python 3: open(..., 'wb')
-        peak_indicator, peak_neg_indicator = pickle.load(f)
 
 
 ###
@@ -191,39 +181,41 @@ if(os.path.exists(savePath_peak)):
 ##=============================================================================
 # Plot of centric diatom displacements
 ##=============================================================================
-Time_loc = track.df['Time'][track.imageIndex_array[:-1]]
+Time_loc = track.df['Time'][track.imageIndex_array]
 ##
 
 img_index = track.imageIndex
 
 nData = 500
 
-x_data = track.df['Time'][track.imageIndex[:-2]]
+x_data = track.df['Time'][track.imageIndex]
 y_data = track.corrected_disp
+
+y1_data = track.Vz_objFluid
 
 
 
 
 fig, ax0 = plt.subplots(1,figsize=(4.8,3.6), dpi=150)
 
-ax0.plot(track.df['Time'][track.imageIndex_array], track.V_objFluid , color = 'cornflowerblue', label = 'Residual', linestyle='-', linewidth=2)
+ax0.plot(track.df['Time'][track.imageIndex_array], track.Vz_objFluid , color = 'cornflowerblue', label = 'Vz', linestyle='-', linewidth=2)
 
-for jj in range(0,len(peak_neg_indicator)-1):
-    ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.45)
+#for jj in range(0,len(peak_neg_indicator)-1):
+#    ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.45)
 
-ax0.vlines(x = Time_loc[0], ymin = np.min(track.V_objFluid), ymax = np.max(track.V_objFluid),color='w',linewidth=2)
+ax0.vlines(x = Time_loc[0], ymin = np.min(track.Vz_objFluid), ymax = np.max(track.Vz_objFluid),color='w',linewidth=2)
 
 
 scat = ax0.scatter(Time_loc[0], track.V_objFluid[0], 50, color='r', zorder = 10)
 
-#plt.show()
+plt.show()
 
 
 
 #ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
 
-t_low = 40
-t_high = 240
+t_low = 0
+t_high = 10
 
 Tmin_index = next((i for i,x in enumerate(Time_loc) if x >= t_low), None)
 Tmax_index = next((i for i,x in enumerate(Time_loc) if x >= t_high), None)
@@ -235,16 +227,16 @@ for ii in range(Tmin_index,Tmax_index):
     print(time)
     plt.cla()
     
-    ax0.plot(track.df['Time'][track.imageIndex_array], track.V_objFluid , color = 'cornflowerblue', label = 'Residual', linestyle='-', linewidth=2)
+    ax0.plot(track.df['Time'][track.imageIndex_array], track.Vz_objFluid , color = 'cornflowerblue', label = 'Residual', linestyle='-', linewidth=2)
 
-    for jj in range(0,len(peak_neg_indicator)-1):
-        ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.35)
+#    for jj in range(0,len(peak_neg_indicator)-1):
+#        ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.35)
     
     
-    ax0.vlines(x = time, ymin = np.min(track.V_objFluid), ymax = np.max(track.V_objFluid),color='w',linewidth=2, zorder = 10)
+    ax0.vlines(x = time, ymin = np.min(track.Vz_objFluid), ymax = np.max(track.Vz_objFluid),color='w',linewidth=2, zorder = 10)
 
 
-    scat = ax0.scatter(time, track.V_objFluid[ii], 30, color='w', zorder = 10)
+    scat = ax0.scatter(time, track.Vz_objFluid[ii], 30, color='w', zorder = 10)
 
     
     ax0.set_ylabel('z - velocity ($ mm  s^{-1}$)')
@@ -261,7 +253,7 @@ for ii in range(Tmin_index,Tmax_index):
     
     img_name = 'Plot_'+track.df['Image name'][img_index[ii]]
 #    print(img_name)
-    plt.savefig(os.path.join(savePath,img_name), dpi=150)
+#    plt.savefig(os.path.join(savePath,img_name), dpi=150)
     
     
     
