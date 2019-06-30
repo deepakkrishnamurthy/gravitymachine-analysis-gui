@@ -167,9 +167,9 @@ class gravMachineTrack:
             
             
             # PIV parameters
-            self.window_size = 64
-            self.overlap = 32
-            self.searchArea = 64
+            self.window_size = 128
+            self.overlap = 64
+            self.searchArea = 128
             
      
             self.pixelPermm =  314*(self.imW/720)   # Pixel per mm for TIS camera (DFK 37BUX273) and 720p images
@@ -261,14 +261,14 @@ class gravMachineTrack:
     def saveAnalysisData(self, overwrite = True):
 
         if(overwrite or os.path.exists(self.analysis_save_path)==False):
-            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Local time':[],'Track description':[],'Time':[],'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
+            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Local time':[],'Track description':[],'Time':[], 'Image name':[], 'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
             
             analysis_len = len(self.imageIndex_array)
             
             print('Local time {}'.format(self.localTime))
             print('Track description {}'.format(self.track_desc))
 
-            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len, axis = 0),'Track description':np.repeat(self.track_desc, analysis_len, axis=0),'Time':self.df['Time'][self.imageIndex_array],'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
+            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len, axis = 0),'Track description':np.repeat(self.track_desc, analysis_len, axis=0),'Time':self.df['Time'][self.imageIndex_array], 'Image name':self.df['Image name'][self.imageIndex_array], 'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
                 
             self.df_analysis.to_csv(self.analysis_save_path)
 
