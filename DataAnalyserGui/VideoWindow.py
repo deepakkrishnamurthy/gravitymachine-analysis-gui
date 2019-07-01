@@ -36,17 +36,38 @@ class ImageWidget(pg.GraphicsLayoutWidget):
         self.img=pg.ImageItem(border='w')
         self.view.addItem(self.img)
         
+#    def refresh_image(self, image_bgr): 
+#
+#        image_gray=cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+#
+#        image_gray=cv2.rotate(image_gray,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
+#        
+#        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6))
+#                
+#        image_gray = clahe.apply(image_gray)
+#        
+#        self.img.setImage(image_gray)
+        
     def refresh_image(self, image_bgr): 
 
-        image_gray=cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
 
-        image_gray=cv2.rotate(image_gray,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
+        image_bgr=cv2.rotate(image_bgr,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
         
-        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6))
+        image_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
+        
+        L,A,B = cv2.split(image_lab)
+        
+
+        clahe = cv2.createCLAHE(clipLimit=3.5, tileGridSize=(6,6))
+        
+        CL = clahe.apply(L)
+        
+        image_lab = cv2.merge((CL,A,B))
+        
+        image_rgb = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
                 
-        image_gray = clahe.apply(image_gray)
-        
-        self.img.setImage(image_gray)
+    
+        self.img.setImage(image_rgb)
         
         
 '''
@@ -91,7 +112,7 @@ class VideoWindow(QtWidgets.QWidget):
         # If true then plays the data in real-time
         self.real_time = True
         # No:of frames to advance for recording purposes
-        self.frames = 10
+        self.frames = 3
         #Gui Component
         
         self.image_widget=ImageWidget()
@@ -288,53 +309,53 @@ class VideoWindow(QtWidgets.QWidget):
         self.record_signal.emit(self.isRecording)
         print('start-recording-signal')
     
-    def play_refresh(self):
-        
-        if(self.real_time == True):
-            timediff = time.time()-self.current_computer_time
-            
-            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-            if index>self.positionSlider_prevValue:
-                self.current_computer_time+=timediff
-                self.current_track_time+=timediff
-                self.positionSlider.setValue(index)
-                
-        else:
-            
-            self.current_track_index = self.prev_track_index + self.frames
-        
-            self.positionSlider.setValue(self.current_track_index)
-            
-            self.prev_track_index = self.current_track_index
-            
-            
-            
-            index = self.prevIndex + 1
-            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-            if index>self.positionSlider_prevValue:
-                self.current_computer_time+=timediff
-                self.current_track_time+=timediff
-                self.positionSlider.setValue(index)
+#    def play_refresh(self):
+#        
+#        if(self.real_time == True):
+#            timediff = time.time()-self.current_computer_time
+#            
+#            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
+#            if index>self.positionSlider_prevValue:
+#                self.current_computer_time+=timediff
+#                self.current_track_time+=timediff
+#                self.positionSlider.setValue(index)
+#                
+#        else:
+#            
+#            self.current_track_index = self.prev_track_index + self.frames
+#        
+#            self.positionSlider.setValue(self.current_track_index)
+#            
+#            self.prev_track_index = self.current_track_index
+#            
+#            
+#            
+#            index = self.prevIndex + 1
+#            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
+#            if index>self.positionSlider_prevValue:
+#                self.current_computer_time+=timediff
+#                self.current_track_time+=timediff
+#                self.positionSlider.setValue(index)
             
     # Implementing a new play function where images are played sequentially and not according to a time difference.        
-#    def play_refresh(self):
-##        timediff=time.time()-self.current_computer_time
-#        
-#        
-#        self.current_track_index = self.prev_track_index + self.frames
-#        
-#        self.positionSlider.setValue(self.current_track_index)
-#        
-#        self.prev_track_index = self.current_track_index
-#        
-#        
-#        
-#        index = self.prevIndex + 1
-#        index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-#        if index>self.positionSlider_prevValue:
-#            self.current_computer_time+=timediff
-#            self.current_track_time+=timediff
-#            self.positionSlider.setValue(index)
+    def play_refresh(self):
+#        timediff=time.time()-self.current_computer_time
+        
+        
+        self.current_track_index = self.prev_track_index + self.frames
+        
+        self.positionSlider.setValue(self.current_track_index)
+        
+        self.prev_track_index = self.current_track_index
+        
+        
+        
+        index = self.prevIndex + 1
+        index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
+        if index>self.positionSlider_prevValue:
+            self.current_computer_time+=timediff
+            self.current_track_time+=timediff
+            self.positionSlider.setValue(index)
             
             
             
