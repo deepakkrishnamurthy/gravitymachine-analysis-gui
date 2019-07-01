@@ -62,8 +62,10 @@ rcParams.update({'font.size': 12})
 #path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good' 
 
 
-path = 'G:\GM-data\GM tracks for videos\Wailesii_Replete'
-path = "G:\GM-data\GM tracks for videos\Sp7"
+#path = 'G:\GM-data\GM tracks for videos\Wailesii_Replete'
+#path = "G:\GM-data\GM tracks for videos\Sp7"
+
+path = "G:/GM-data/NutrientDepleteCondition/Wailesii_Starving_6days/15_filaments"
 trackfile = 'track000.csv'
 
 fileName = os.path.join(path, trackfile)
@@ -77,8 +79,8 @@ savePath= os.path.join(rootFolder, Folder)
 if (not os.path.exists(savePath)):
     os.makedirs(savePath)
 
-T_start = 742
-T_end = 942
+T_start = 15
+T_end = 442
 
 frame_start = 'IMG_0025604.tif'
 frame_end = 'IMG_0025833.tif'
@@ -196,7 +198,7 @@ nData = 500
 x_data = track.df['Time'][track.imageIndex]
 y_data = np.array(track.Z_objFluid)
 
-y1_data = np.array(track.df['ZobjWheel'][track.imageIndex_array])
+y1_data = np.array(track.Vz_objFluid)
 
 y1_data = track.smoothSignal(y1_data, 0.5)
 
@@ -221,8 +223,8 @@ plt.show()
 
 #ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
 
-t_low = 742
-t_high = 875
+t_low = 300
+t_high = 435
 
 Tmin_index = next((i for i,x in enumerate(Time_loc) if x >= t_low), None)
 Tmax_index = next((i for i,x in enumerate(Time_loc) if x >= t_high), None)
@@ -240,7 +242,7 @@ for ii in range(Tmin_index,Tmax_index):
 #        ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.35)
     
     
-    ax0.vlines(x = time, ymin = np.min(y1_data), ymax = np.max(y1_data),color='w',linewidth=2, zorder = 10)
+    ax0.vlines(x = time, ymin = np.min(y1_data)-0.1, ymax = np.max(y1_data),color='w',linewidth=2, zorder = 10)
 
 
     scat = ax0.scatter(time, y1_data[ii], 30, color='w', zorder = 10)
@@ -248,8 +250,8 @@ for ii in range(Tmin_index,Tmax_index):
     
     ax0.set_ylabel('z - velocity ($ mm  s^{-1}$)')
     ax0.set_xlabel('Time (s)')
-    ax0.set_xlim(T_start, 875)
-    ax0.set_ylim(np.min(y1_data),0.05)
+    ax0.set_xlim(300, 430)
+    ax0.set_ylim(np.min(y1_data)-0.1,0)
     
 
 
