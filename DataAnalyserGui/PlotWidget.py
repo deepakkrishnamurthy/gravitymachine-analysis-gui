@@ -59,6 +59,7 @@ class PlotWidget(pg.GraphicsLayoutWidget):
         self.curve = self.plot1.plot(
             self.Abs, self.Ord, pen=pg.mkPen(color, width=3)
         )
+        self.curve.setClipToView(True)
 
         self.plot1.enableAutoRange('xy', True)
         self.plot1.showGrid(x=True, y=True)
@@ -77,6 +78,7 @@ class PlotWidget(pg.GraphicsLayoutWidget):
     def update_plot(self, Ord_data):
         self.Ord = Ord_data
         self.curve.setData(self.Abs, self.Ord)
+        self.curve.setDownsampling(auto=True)
 
     def update_cursor(self, time):
         self.point = QtCore.QPointF(time, 0)
