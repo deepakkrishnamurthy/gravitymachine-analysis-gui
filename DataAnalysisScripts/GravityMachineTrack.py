@@ -28,6 +28,11 @@ import seaborn as sns
 import matplotlib.colors as Colors
 import rangeslider_functions
 import cv2
+from tkinter import filedialog
+from tkinter import *
+from scipy.ndimage.filters import uniform_filter1d
+
+
 import PIV_Functions
 imp.reload(PIV_Functions)
 
@@ -46,34 +51,53 @@ def errorfill(x, y, yerr, color=None, alpha_fill=0.3, ax=None, label = None):
 
 class gravMachineTrack:
 
-    def __init__(self, path, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time'):
+    def __init__(self, fileName = None, organism = 'Plankton', condition = 'Control', root = None, Tmin=0, Tmax=0, frame_min = None, frame_max = None, indexing = 'time', computeDisp = False, findDims = False, orgDim = None, overwrite_piv = False, overwrite_velocity = False, scaleFactor = 20, localTime = 0, trackDescription = 'Normal'):
         
-        self.path = path
+        self.Organism = organism
+        self.Condition = condition
         
-        self.openFile()
+        # Local Time when the track was measured
+        self.localTime = localTime
+        
+        # Description of track (such as observed cell/organism state). Warning: This may be subjective. Mainly as a book-keeping utility
+        self.track_desc = trackDescription
+
+        self.overwrite_piv = overwrite_piv
+        self.overwrite_velocity = overwrite_velocity
+        self.Tmin = Tmin
+        self.Tmax = Tmax
+        
+        self.frame_min = frame_min
+        self.frame_max = frame_max
+        
+        self.path = None
+        
+        # Opens a Folder and File dialog for choosing the dataset for analysis
+        self.openFile(fileName = fileName)
         
         self.imgFormat = '.svg'
-        self.root, self.Organism = os.path.split(self.path)
+        self.root, *rest = os.path.split(self.path)
         
-        
-        
-        self.PIVfolder = os.path.join(self.path, 'PIVresults_64px')
-        
-        if(not os.path.exists(self.PIVfolder)):
-            os.makedirs(self.PIVfolder)
-        
+        # Read the CSV file as a pandas dataframe
         self.df = pd.read_csv(os.path.join(self.path, self.trackFile))
         
         self.ColumnNames = list(self.df.columns.values)
         
         print(self.ColumnNames)
         
+        # X position of object (wrt lab)
+        self.Xobj_name = 'Xobj'
+        # Y position of object (wrt lab)
+        self.Yobj_name = 'Yobj'
         # X position relative to image center
-        self.Xobj_name = self.ColumnNames[1]
-        self.Yobj_name = self.ColumnNames[2]
+        self.XobjImage_name = 'Xobj_image'
         # Z position relative to image center
-        self.Zobj_name = self.ColumnNames[3]
+        self.Zobj_name = 'Zobj'
         
+
+        
+        
+        # Make T=0 as the start of the track
         self.df['Time'] = self.df['Time'] - self.df['Time'][0]
         
         # Crop the track based on time or frame based indexing
@@ -118,7 +142,7 @@ class gravMachineTrack:
         self.df = self.df.set_index(df_index)
         
         
-#        self.df['ZobjWheel'] = self.df['ZobjWheel'] - self.df['ZobjWheel'][0]
+        self.df['ZobjWheel'] = self.df['ZobjWheel'] - self.df['ZobjWheel'][0]
         
         self.trackLen = len(self.df)
         
@@ -130,93 +154,135 @@ class gravMachineTrack:
         self.samplingFreq = 1/float(self.dT)
         # Window to use for smoothing data. 
         # IMPORTANT: We only keep variations 10 times slower that the frame rate of data capture.
-        self.window_time = 50*self.dT
+        self.window_time = 10*self.dT
         
         self.computeVelocity()
         self.computeAccln()
+
+        try:
+            
+            self.createImageIndex()
+            
+    #        self.setColorThresholds()
+            
+            
+            # PIV parameters
+            self.window_size = 128
+            self.overlap = 64
+            self.searchArea = 128
+            
+     
+            self.pixelPermm =  314*(self.imW/720)   # Pixel per mm for TIS camera (DFK 37BUX273) and 720p images
+            
+            self.mmPerPixel = 1/self.pixelPermm
+            
+            print('Pixels per mm: {}'.format(self.pixelPermm))
+            
+            self.PIVfolder = os.path.join(self.path, 'PIVresults_{}px'.format(self.window_size))
         
-#        self.computeDisplacement()
-        
-        self.createImageIndex()
-        
-#        self.setColorThresholds()
-        
-        
-        # PIV parameters
-        self.window_size = 64
-        self.overlap = 32
-        self.searchArea = 64
-        
- 
-        self.pixelPermm =  314*(self.imW/720)   # Pixel per mm for TIS camera (DFK 37BUX273) and 720p images
-        
-        self.mmPerPixel = 1/self.pixelPermm
-        
-        print('Pixels per mm: {}'.format(self.pixelPermm))
-        
-#        self.findOrgDims(circle=1)
+            if(not os.path.exists(self.PIVfolder)):
+                os.makedirs(self.PIVfolder)
+            
+        except:
+            
+            print('Warning: No images found corresponding to track data')
+                
+        self.scaleFactor = scaleFactor
+        if(findDims):
+            self.findOrgDims(circle=1)
+        else:
+            self.OrgDim = orgDim
         
         # Initialize a suitable tracker
         tracker_types = ['BOOSTING', 'MIL','KCF', 'TLD', 'MEDIANFLOW', 'GOTURN', 'MOSSE', 'CSRT']
 
         self.initializeTracker('CSRT')
         
+       #  If the compute Displacement flag is True then calclate the true displacement using the PIV based velocities
+        if(computeDisp):
+            self.FluidVelocitySaveFile = 'fluidVelocityTimeSeries_{}_{}.pkl'.format(self.Tmin, self.Tmax)
+            self.FluidVelocitySavePath = os.path.join(self.path, self.FluidVelocitySaveFile)
+            self.correctedDispVelocity(overwrite_flag=self.overwrite_velocity)
         
-    def openFile(self):
+        
+    def openFile(self, fileName = None):
+        
         print('Opening dataset ...')
-
-        self.image_dict = {}
         
-        trackFileNames = []
-        if os.path.exists(self.path):
+        if(fileName is None):
+            fileName =  filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("CSV files","*.csv"),("all files","*.*")))
+        
 
-            # Walk through the folders and identify ones that contain images
-            for dirs, subdirs, files in os.walk(self.path, topdown=False):
-               
-                root, subFolderName = os.path.split(dirs)
-                    
-                print(subFolderName[0:6])
-                if('images' in subFolderName):
+        self.path, self.trackFile = os.path.split(fileName)        
+#        self.path = QtGui.QFileDialog.getExistingDirectory(None, "Open dataset folder")
+        
+        self.analysis_save_path = os.path.join(self.path, self.trackFile[0:-4]+'_{}_{}'.format(round(self.Tmin), round(self.Tmax)) + '_analysis.csv')
+        
+        
+        print("Path : {}".format(self.path))
+        
+        if(len(self.path)>0):
+            self.image_dict = {}
+            
+            trackFileNames = []
+            if os.path.exists(self.path):
+    
+                # Walk through the folders and identify ones that contain images
+                for dirs, subdirs, files in os.walk(self.path, topdown=False):
                    
-                   for fileNames in files:
-                       key = fileNames
-                       value = subFolderName
-                       self.image_dict[key]=value
+                    root, subFolderName = os.path.split(dirs)
+                        
+                    print(subFolderName[0:6])
+                    if('images' in subFolderName):
+                       
+                       for fileNames in files:
+                           key = fileNames
+                           value = subFolderName
+                           self.image_dict[key]=value
+    
+                    if(os.path.normpath(dirs) == os.path.normpath(self.path)):
+                        for fileNames in files:
+                            if('.csv' in fileNames):
+                                trackFileNames.append(fileNames)
+    
+#                if(len(trackFileNames)==0):
+#                    raise FileNotFoundError('CSV track was not found!')      
+#                elif(len(trackFileNames)>=1):
+#                    print('Choose the track file to use!')
+#                                        
+#                    trackFile,*rest = QtGui.QFileDialog.getOpenFileName(None, 'Open track file',self.path,"CSV fles (*.csv)")
+#                    print(trackFile)
+#                    head,self.trackFile = os.path.split(trackFile)
+#                    print('Loaded {}'.format(self.trackFile))
 
-                if(os.path.normpath(dirs) == os.path.normpath(self.path)):
-                    for fileNames in files:
-                        if('.csv' in fileNames):
-                            trackFileNames.append(fileNames)
+        else:
+            print("No dataset chosen")
 
-            if(len(trackFileNames)==0):
-                raise FileNotFoundError('CSV track was not found!')      
-            elif(len(trackFileNames)>1):
-                print('More than one .csv file found!')
-                
-#                for ii, filename in enumerate(trackFileNames):
-#                    
-#                    print('{}: {} \n'.format(ii+1, filename))
-#                    
-#                print('Choose the file to use:')
-#                file_no = int(input())
-#                    
-#                self.trackFile = trackFileNames[file_no-1]
-                
-                self.trackFile = 'track.csv'
-                print('Loaded {}'.format(self.trackFile))
-                
-#                
-#                for tracks in trackFileNames:
-#                    if('division' in tracks):
-#                        self.trackFile = tracks
-#                        print('Loaded {}'.format(self.trackFile))
-#                    elif('mod' in tracks):
-#                        self.trackFile = tracks
-#                        print('Loaded {}'.format(self.trackFile))
+    def saveAnalysisData(self, overwrite = True):
 
-            else:
-                self.trackFile = trackFileNames[0]
-                print('Loaded {}'.format(self.trackFile))
+        if(overwrite or os.path.exists(self.analysis_save_path)==False):
+            self.df_analysis = pd.DataFrame({'Organism':[],'Condition':[],'Size':[],'Local time':[],'Track description':[],'Time':[], 'Image name':[], 'Xpos_raw':[],'Ypos_raw':[],'Zpos_raw':[],'Xpos':[],'Zpos':[],'Xvel':[],'Yvel':[],'Zvel':[]})
+            
+            analysis_len = len(self.imageIndex_array)
+            
+            print('Local time {}'.format(self.localTime))
+            print('Track description {}'.format(self.track_desc))
+
+            self.df_analysis = self.df_analysis.append(pd.DataFrame({'Organism':np.repeat(self.Organism,analysis_len,axis = 0),'Condition':np.repeat(self.Condition,analysis_len,axis = 0),'Size': np.repeat(self.OrgDim,analysis_len,axis = 0),'Local time':np.repeat(self.localTime,analysis_len, axis = 0),'Track description':np.repeat(self.track_desc, analysis_len, axis=0),'Time':self.df['Time'][self.imageIndex_array], 'Image name':self.df['Image name'][self.imageIndex_array], 'Xpos_raw':self.df['Xobj'][self.imageIndex_array],'Ypos_raw':self.df['Yobj'][self.imageIndex_array],'Zpos_raw':self.df['ZobjWheel'][self.imageIndex_array],'Xpos':self.df['Xobj'][self.imageIndex_array],'Zpos':self.Z_objFluid,'Xvel':self.Vx[self.imageIndex_array],'Yvel':self.Vy[self.imageIndex_array],'Zvel':self.Vz_objFluid}))
+                
+            self.df_analysis.to_csv(self.analysis_save_path)
+
+        
+    def loadAnalysisData(self):
+
+        if(os.path.exists(self.analysis_save_path)):
+
+            self.df =  pd.read_csv(self.analysis_save_path)
+
+        else:
+
+            print('Analysis data does not exist!')
+            
                 
     def initializeTracker(self, tracker_type):
         major_ver, minor_ver, subminor_ver = cv2.__version__.split('.')
@@ -437,26 +503,14 @@ class gravMachineTrack:
 
                 self.Theta_dot[i] = (self.df['ThetaWheel'][i+1]-self.df['ThetaWheel'][i-1])/(self.df['Time'][i+1]-self.df['Time'][i-1])
 
-#            self.Vx.append((self.Xobj[i+1]-self.Xobj[i])/(self.Time[i+1]-self.Time[i]))
-#            self.Vy.append((self.Yobj[i+1]-self.Yobj[i])/(self.Time[i+1]-self.Time[i]))
-#            self.Vz.append((self.ZobjWheel[i+1]-self.ZobjWheel[i])/(self.Time[i+1]-self.Time[i])) 
             
-    
-        self.Vx= self.smoothSignal(self.Vx, window_time = self.window_time)
-        self.Vy= self.smoothSignal(self.Vy, window_time = self.window_time)
-        self.Vz= self.smoothSignal(self.Vz, window_time = self.window_time)
-        
+        # Smooth the velocity data to only keep frequencies 10 times lower than the sampling frequency (low-pass filter)
+        self.Vx = self.smoothSignal(self.Vx, window_time = self.window_time)
+        self.Vy = self.smoothSignal(self.Vy, window_time = self.window_time)
+        self.Vz = self.smoothSignal(self.Vz, window_time = self.window_time)
         self.Vz_objLab = self.smoothSignal(self.Vz_objLab, window_time = self.window_time)
-        
         self.Theta_dot= self.smoothSignal(self.Theta_dot, window_time = self.window_time)
-
-        
-        
-        
-#        self.Vx, self.Vy, self.Vz = self.smoothVelocity(self.window_time)
-        
         self.Speed = (self.Vx**2 + self.Vy**2 + self.Vz**2)**(1/2)
-        
         self.Speed_z = (self.Vz**2)**(1/2)
         
     
@@ -494,14 +548,14 @@ class gravMachineTrack:
     def computeDisplacement(self, x_data = None, y_data = None):
         # Compute the displacement by integrating a velocity time series.
         
-        disp = scipy.integrate.cumtrapz(y = y_data, x = x_data)
+        disp = scipy.integrate.cumtrapz(y = y_data, x = x_data, initial = 0)
         
         return disp
 #        self.disp_z_computed = scipy.integrate.cumtrapz(y = self.Vz, x = self.df['Time'])
         
         
 
-    def computeFluidVelocity(self, image_a, image_b, deltaT = 1, overwrite = False, masking = False, scaleFactor = 1.5):
+    def computeFluidVelocity(self, image_a, image_b, deltaT = 1, overwrite_piv = False, overwrite_velocity = False, masking = False, obj_position = None, obj_size = 0.1):
         # Computes the mean fluid velocity, far away from objects, given a pair of images
                 
         #--------------------------------------------------------------------------
@@ -518,7 +572,7 @@ class gravMachineTrack:
         saveFile = os.path.join(self.PIVfolder,'PIV_' + image_a[:-4]+'.pkl')
         
         
-        if(not os.path.exists(saveFile) or overwrite):
+        if(not os.path.exists(saveFile) or overwrite_piv):
             print('-'*50)
             print('Analyzing Frame pairs: {} and {} \n'.format(image_a,image_b))
             print('-'*50)
@@ -532,7 +586,7 @@ class gravMachineTrack:
             #--------------------------------------------------------------------------
             # Threshold the image to extract the object regions
             #--------------------------------------------------------------------------
-            if(masking):
+            if(masking and obj_position is None):
                 Contours = PIV_Functions.findContours(frame_a_color,self.threshLow,self.threshHigh,'largest')
             else:
                 Contours = np.nan
@@ -578,9 +632,32 @@ class gravMachineTrack:
         
         
         if(masking is True):    
-            x_cent, y_cent, radius = PIV_Functions.findCircularContour(Contours)
-            maskInsideCircle = PIV_Functions.pointInCircle(x,y,x_cent,y_cent,scaleFactor*radius)
+            if(obj_position is None):
+                x_cent, y_cent, radius = PIV_Functions.findCircularContour(Contours)
+            else:
+                x_cent, y_cent = obj_position
+                radius = round((self.OrgDim/2.0)*self.pixelPermm)
+                
+            maskInsideCircle = PIV_Functions.pointInCircle(x,y,x_cent,y_cent,self.scaleFactor*radius)
             u_farfield, v_farfield = (u[~maskInsideCircle], v[~maskInsideCircle])
+            
+#            print(x_cent, y_cent)
+#            print(radius)
+#            
+#            print(maskInsideCircle)
+            
+#            plt.figure(1)
+##            plt.scatter(x_cent, y_cent, 'ro')
+#            plt.imshow(maskInsideCircle)
+#            plt.pause(0.001)
+#            plt.show()
+            
+            
+#            plt.figure(2)
+#            cv2.circle(frame_a_gs,(int(x_cent), int(y_cent)),int(scaleFactor*radius), color = (0,255,0))
+#            cv2.imshow('frame',frame_a_gs)
+#            cv2.waitKey(1)
+       
         else:
             u_farfield, v_farfield = (u, v)
             
@@ -592,7 +669,7 @@ class gravMachineTrack:
         return u_avg, v_avg, u_std, v_std
  
       
-    def FluidVelTimeSeries(self, overwrite = False):
+    def FluidVelTimeSeries(self, overwrite_velocity = False):
         # Computes the Fluid velocity at each time point during which an image is available and stores the result.
         # For each pair of time-points with images:
         # Generate a mask for each image as necessary
@@ -600,13 +677,8 @@ class gravMachineTrack:
         # Calculate the average velocity of the fluid in regions far from the object
         # Store the average velocity as a finction of time
         
-        saveFile = 'fluidVelocityTimeSeries_full.pkl'
         
-        savePath = os.path.join(self.path, saveFile)
-        
-        
-        
-        if(not os.path.exists(savePath) or overwrite):
+        if(not os.path.exists(self.FluidVelocitySavePath) or overwrite_velocity):
         
             nImages = len(self.imageIndex)
 #            nImages = 100
@@ -630,6 +702,8 @@ class gravMachineTrack:
                 image_a = self.df['Image name'][imageindex_a]
                 image_b = self.df['Image name'][imageindex_b]
                 
+                obj_position = (self.imW/2, self.imH/2 - round(self.df['Zobj'][imageindex_a]*self.pixelPermm))
+                
                 
                 # First check if both these images exist in memory
                 try:
@@ -648,8 +722,6 @@ class gravMachineTrack:
                 
                 print(frame_gap)
                 
-                
-                
                 if(image_a_exists and image_b_exists and frame_gap == 1):
                     print('Consequtive images found ...')
                 
@@ -658,7 +730,7 @@ class gravMachineTrack:
                     
                     dT = self.df['Time'][imageindex_b] - self.df['Time'][imageindex_a]
                     
-                    self.u_avg_array[ii], self.v_avg_array[ii], self.u_std_array[ii], self.v_std_array[ii] = self.computeFluidVelocity(image_a,image_b,deltaT = dT, masking = True, scaleFactor=1.5, overwrite = False)
+                    self.u_avg_array[ii], self.v_avg_array[ii], self.u_std_array[ii], self.v_std_array[ii] = self.computeFluidVelocity(image_a,image_b,deltaT = dT, masking = True, obj_position = obj_position, obj_size = self.OrgDim, overwrite_piv = self.overwrite_piv)
                     self.imageIndex_array[ii] = imageindex_a
                     
                 # If either of those images do not exist, assume that the velocity remains constant over the missing frames
@@ -669,19 +741,14 @@ class gravMachineTrack:
                     self.imageIndex_array[ii] = imageindex_a
                     continue
                
-                
-                
-               
-            
-            
             self.u_avg_array, self.v_avg_array = (self.smoothSignal(self.u_avg_array, self.window_time),self.smoothSignal(self.v_avg_array, self.window_time))
             
-            with open(savePath, 'wb') as f:  # Python 3: open(..., 'wb')
+            with open(self.FluidVelocitySavePath, 'wb') as f:  # Python 3: open(..., 'wb')
                     pickle.dump((self.imageIndex_array, self.u_avg_array, self.v_avg_array, self.u_std_array, self.v_std_array), f)
                 
             
         else:
-            with open(savePath, 'rb') as f:  # Python 3: open(..., 'wb')
+            with open(self.FluidVelocitySavePath, 'rb') as f:  # Python 3: open(..., 'wb')
                     self.imageIndex_array, self.u_avg_array, self.v_avg_array, self.u_std_array, self.v_std_array = pickle.load(f)
                 
                 
@@ -720,36 +787,38 @@ class gravMachineTrack:
         self.threshHigh = threshHigh
         
         print('Color thresholds for segmentation: \n LOW: {}, HIGH : {}'.format(self.threshLow, self.threshHigh))
+   
+        
+    def correctedDispVelocity(self, overwrite_flag = False):
+        
+        
+        self.FluidVelTimeSeries(overwrite_velocity = overwrite_flag)
+        
+        # Vz is the object velocity relative to the stage V_objStage
+        
+        Vz_stageLab = -self.Vz[self.imageIndex_array] + self.Vz_objLab[self.imageIndex_array]
+        
+        Vz_fluidStage = self.v_avg_array - Vz_stageLab
+        
+        self.Vz_objFluid = self.Vz[self.imageIndex_array] - Vz_fluidStage
+        
+        self.Z_objFluid =  self.computeDisplacement(x_data = self.df['Time'][self.imageIndex_array], y_data = self.Vz_objFluid)
+      
+
     #--------------------------------------------------------------------------       
     # Signal Processing Functions
     #--------------------------------------------------------------------------       
     def smoothSignal(self, data, window_time):      # Window is given in seconds
             
             avgWindow = int(window_time*self.samplingFreq)
-            
-    #        if(pd.__version__ is not '0.20.3'):
-    #            return data.rolling(avgWindow).mean()
-    #        else:
-            return pd.rolling_mean(data, avgWindow, min_periods = 1, center = True)
-        
-        
-    def correctedDispVelocity(self, overwrite_flag = False):
-        
-        
-        self.FluidVelTimeSeries(overwrite = overwrite_flag)
-        
-        # Vz is the object velocity relative to the stage V_objStage
-        
-        V_stageLab = -self.Vz[self.imageIndex_array] + self.Vz_objLab[self.imageIndex_array]
-        
-        
-        
-        V_fluidStage = self.v_avg_array - V_stageLab
-        
-        self.V_objFluid = self.Vz[self.imageIndex_array] - V_fluidStage
-        
-        self.corrected_disp =  self.computeDisplacement(x_data = self.df['Time'][self.imageIndex_array], y_data = self.V_objFluid)
-        
+            return uniform_filter1d(data, size = avgWindow, mode="wrap")
+#            data = pd.Series(data)
+#            rolling_mean = np.array(data.rolling(window = avgWindow, center = True).mean())
+##            try:
+#            return rolling_mean
+#            except:
+#                return pd.rolling_mean(data, avgWindow, min_periods = 1, center = True)
+          
     def detectCells(self, start_image=0, stop_image=0):
         
         

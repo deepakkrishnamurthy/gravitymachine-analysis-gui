@@ -18,6 +18,7 @@ from PQG_ImageExporter import PQG_ImageExporter
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''
 pg.setConfigOption('foreground', 'w')
+pg.setConfigOptions(antialias=True)
 fontTicks=QtGui.QFont()
 fontTicks.setPixelSize(18)
 class PlotWidget(pg.GraphicsLayoutWidget):
@@ -33,14 +34,24 @@ class PlotWidget(pg.GraphicsLayoutWidget):
         self.ax_y = pg.AxisItem('left', pen = pg.mkPen('w', width=2) )
         self.ax_x = pg.AxisItem('bottom', pen = pg.mkPen('w', width=2) )
         
+        
         self.ax_x.tickFont = fontTicks
         self.ax_y.tickFont = fontTicks
-
-        self.ax_x.tickTextOffset = 10
-        self.ax_y.tickTextOffset = 10
         
-        self.ax_x.labelText = 'Time (s)'
-        self.ax_y.labelText = label + '(mm)'
+
+#        self.ax_x.tickTextOffset = 32
+#        self.ax_y.tickTextOffset = 32
+        
+#        self.ax_x.tickTextHeight = 32
+#        self.ax_y.tickTextheight = 32
+        
+        labelStyle = {'color': '#FFF', 'font-size': '12pt'}
+        
+        self.ax_x.setLabel('Time (s)', **labelStyle)
+        self.ax_y.setLabel(label + '(mm)', **labelStyle)
+        
+#        self.ax_x.labelText = 'Time (s)'
+#        self.ax_y.labelText = label + '(mm)'
         
         self.ax_x.showLabel(True)
         self.ax_y.showLabel(True)
@@ -48,12 +59,13 @@ class PlotWidget(pg.GraphicsLayoutWidget):
         self.plot1=self.addPlot(title=title,pen=pg.mkPen(color, width=2),axisItems = {'left':self.ax_y, 'bottom':self.ax_x})
 
 #        self.plot1=self.addPlot(title=title,pen=pg.mkPen(color, width=1))
-        self.curve=self.plot1.plot(self.Abs,self.Ord, pen=pg.mkPen(color, width=2))
+        self.curve=self.plot1.plot(self.Abs,self.Ord, pen=pg.mkPen(color, width=3))
         self.plot1.enableAutoRange('xy', True)
         self.plot1.showGrid(x=True, y=True)
         
         self.point=QtCore.QPointF(0,0)
-        self.vLine = pg.InfiniteLine(pos=self.point,angle=90, movable=False,  pen=pg.mkPen('w', width=2))
+        self.vLine = pg.InfiniteLine(pos=self.point,angle=90, movable=False,  pen=pg.mkPen('r', width=3))
+
         self.plot1.addItem(self.vLine, ignoreBounds=True)
         #self.plot1.addItem(self.point)
         
@@ -72,7 +84,7 @@ class PlotWidget(pg.GraphicsLayoutWidget):
     def update_cursor(self,time):
         self.point=QtCore.QPointF(time,0)
         self.vLine.setPos(self.point)
-        
+
     def qimage_to_numpy(self,image):
         # Convert a QImage to a numpy array
         width = image.width()

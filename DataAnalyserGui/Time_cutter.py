@@ -25,9 +25,12 @@ import numpy as np
 
 #path = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/nnn1/'
 
-path = '/Volumes/GravMachHD2/div1/'
-tmin = 4250#0#80#0
-tmax = 5250#300#380
+#path = '/Volumes/GravMachHD2/div1/'
+path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121/'
+tmin = 8250#0#80#0
+tmax = 9250#300#380
+
+ 
 
 file="track.csv"
 #Test6_0_0_8mm_movTest2_0_2mm_away
@@ -37,7 +40,7 @@ for row in reader:
     Data.append(row)
 n=len(Data)
 
-Time=np.array([float(Data[i][0])-float(Data[1][0]) for i in range(1,n)])             # Time stored is in milliseconds
+Time=np.array([float(Data[i][0]) for i in range(1,n)])             # Time stored is in milliseconds
 Xobjet=np.array([float(Data[i][1]) for i in range(1,n)])             # Xpos in motor full-steps
 Yobjet=np.array([float(Data[i][2]) for i in range(1,n)])             # Ypos in motor full-steps
 Zobjet=np.array([float(Data[i][3]) for i in range(1,n)])             # Zpos is in encoder units
@@ -52,17 +55,38 @@ MaxfocusMeasure=np.array([float(Data[i][10]) for i in range(1,n)])
 #colorG=np.array([int(Data[i][12]) for i in range(1,n)])
 #colorB=np.array([int(Data[i][13]) for i in range(1,n)])
 
-index_min=np.argmin(abs(Time-tmin))
-index_max=np.argmin(abs(Time-tmax))
+
+# Check if the time column is an absolutely increasing column.
+
+Time_new = np.zeros_like(Time)
+ZobjWheel_new = np.zeros_like(Time)
+for ii in range(1,n-1):
+    
+    if(Time[ii]-Time[ii-1] < 0):
+        Time_new[ii] = Time_new[ii-1] + Time[ii]
+        ZobjWheel_new[ii] = ZobjWheel_new[ii-1] + ZobjWheel[ii]
+        print('Decreasing time found!')
+        print(Time_new[ii-1])
+        print(Time_new[ii])
+        
+    else:
+        Time_new[ii] = Time_new[ii-1] + (Time[ii] - Time[ii-1])
+        ZobjWheel_new[ii] = ZobjWheel_new[ii-1] + (ZobjWheel[ii] - ZobjWheel[ii-1])
+    
+if(tmax == 0):
+    tmax = np.max(Time_new)
+
+index_min=np.argmin(abs(Time_new-tmin))
+index_max=np.argmin(abs(Time_new-tmax))
 
 print(index_min,index_max)
 
-Time2=Time[index_min:index_max+1]
+Time2=Time_new[index_min:index_max+1]
 Xobjet2=Xobjet[index_min:index_max+1]
 Yobjet2=Yobjet[index_min:index_max+1]
 Zobjet2=Zobjet[index_min:index_max+1]
 ThetaWheel2=ThetaWheel[index_min:index_max+1]
-ZobjWheel2=ZobjWheel[index_min:index_max+1]
+ZobjWheel2=ZobjWheel_new[index_min:index_max+1]
 ManualTracking2=ManualTracking[index_min:index_max+1]
 ImageName2=ImageName[index_min:index_max+1]
 focusMeasure2=focusMeasure[index_min:index_max+1]

@@ -57,14 +57,18 @@ def main():
     #--------------------------------------------------------------------------
 #    path = '/Volumes/GRAVMACH1/HopkinsEmbroyologyCourse_GoodData/2018_06_14/Noctiluca/Noctilica7'
 
-    
+#    path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
    
+    path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div'
 
     #------------------------------------------------------------------------------
     # Folder in which images are stored
     #------------------------------------------------------------------------------
     # If analyzing original images
     #------------------------------------------------------------------------------
+    imageFolder = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div/Cropped'
+#    imageFolder = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div/RegisteredProcessed'
+#    imageFolder = '/Volumes/DEEPAK-SSD/GravityMachine/MovieRawFiles/Centric_Diatom_small_40_240/Images_GS'
 #    imageFolder = os.path.join(path,'images')
 #    imageFolder = '/Volumes/GRAVMACH1 2/GravityMachine/Results/PIV_Results/seacucmber9_Auto_IMG_33743_33971_Registered'
     #------------------------------------------------------------------------------
@@ -100,10 +104,10 @@ def main():
 #    imageFolder = '/Volumes/GRAVMACH1/GravityMachine/Results/flowtrace_python/FinalVideos/MarineSnowFlowTrace'
     
     # Pyro Data
-    path = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/nnn1'
+#    path = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/nnn1'
 #    imageFolder = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/Pyro_Division_Processed_1'
     
-    imageFolder = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/Pyro_Ballooning_Cropped'
+#    imageFolder = '/Volumes/GRAVMACH1/PyroTracks_2018_12_21/Pyro_Ballooning_Cropped'
     dataFolder, fileName = os.path.split(path)
 
     
@@ -114,7 +118,7 @@ def main():
     
     rootImageFolder, folderName = os.path.split(imageFolder)
     # Choose the track to analyze
-    TrackName = 'track_cropped.csv'
+    TrackName = 'track_division.csv'
     
     
     
@@ -155,14 +159,14 @@ def main():
                 
                 frame_clahe = clahe.apply(frame_gs)
             
-                cv2.putText(frame_clahe, str(np.round(Time, decimals = 2)) + ' s', (30, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+                cv2.putText(frame_clahe, str(np.round(Time, decimals = 2)) + ' s', (30, 30), font, 5, (255, 255, 255), 3, cv2.LINE_AA)
                 
         #        plt.clf()
-                cv2.imshow('frame',frame_clahe)
-                k = cv2.waitKey(1) & 0xff
-                if k == 27 : break
+#                cv2.imshow('frame',frame_clahe)
+#                k = cv2.waitKey(1) & 0xff
+#                if k == 27 : break
                 
-                plt.show()
+#                plt.show()
                 
                 cv2.imwrite(os.path.join(savePath, ImgName),frame_clahe)
                     
@@ -174,6 +178,7 @@ def main():
         FilesList = os.listdir(imageFolder)
         FilesList.sort()
         print(FilesList)
+        FilesList = FilesList[1:]
         
         print(Track1.Time[0])
         
@@ -182,9 +187,10 @@ def main():
         imgName_start = FilesList[0] 
         imgName_end = FilesList[-1]
         
-        
+        print(50*'-')
         print(imgName_start)
         print(imgName_end)
+        print(50*'-')
         
         startIndex,*rest = np.where(Track1.ImageName == imgName_start)
         stopIndex, *rest = np.where(Track1.ImageName == imgName_end)
@@ -256,7 +262,7 @@ def main():
             frame_clahe = clahe.apply(frame_gs)
     
     
-            cv2.putText(img = frame_clahe, text = str(np.round(Time, decimals = 2)) + ' s', org = (10, 20), fontFace = font, fontScale=0.5, color = (255, 255, 255), thickness = 1,lineType = cv2.LINE_AA)
+            cv2.putText(img = frame_clahe, text = str(np.round(Time, decimals = 2)) + ' s', org = (10, 20), fontFace = font, fontScale=0.75, color = (255, 255, 255), thickness = 2,lineType = cv2.LINE_AA)
     
     #        plt.clf()
             cv2.imshow('frame',frame_clahe)

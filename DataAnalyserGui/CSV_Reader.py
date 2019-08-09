@@ -8,6 +8,7 @@ import csv as csv
 import numpy as np
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui
 import os
+import pandas as pd
 
 '''       
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -23,10 +24,11 @@ class CSV_Reader(QtCore.QObject):
     Zobjet_data = QtCore.pyqtSignal(np.ndarray)
     ImageNames_data = QtCore.pyqtSignal(np.ndarray)
     ImageTime_data = QtCore.pyqtSignal(np.ndarray)
+    LED_intensity_data = QtCore.pyqtSignal(np.ndarray)
 #    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
     
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, Width = 3, Length = 30):
         super(CSV_Reader, self).__init__(parent)
         # File name for .csv file is now auto-detected
         self.file_name=''
@@ -38,6 +40,9 @@ class CSV_Reader(QtCore.QObject):
         self.ImageNames=np.array([])
         self.index_min=0
         self.index_max=0
+        self.W =Width
+        self.L = Length
+        self.df = None
     
     
     def computeSpeed(self,X,T):
@@ -50,31 +55,61 @@ class CSV_Reader(QtCore.QObject):
     def open_newCSV(self,directory, trackFile):
 
         Data=[]
+
         
         self.file_name = trackFile
 
         trackPath = os.path.join(directory, self.file_name)
         
-        reader = csv.reader(open(trackPath,newline=''))
+
+        self.df = pd.read_csv(trackPath)
+
+        self.ColumnNames = list(self.df.columns.values)
+
+        self.Time = np.array(self.df['Time'])            # Time stored is in milliseconds
+        self.Xobjet = np.array(self.df['Xobj'])             # Xpos in motor full-steps
+        self.Yobjet = np.array(self.df['Yobj'])             # Ypos in motor full-steps
         
-        for row in reader:
-            Data.append(row)
-        n=len(Data)
+        if('Xobj_image' in self.ColumnNames):
+            self.Xobj_image = np.array(self.df['Xobj_image'])  
+
+        Zobjet = np.array(self.df['Zobj'])         # Zpos is in encoder units
         
-        self.Time=np.array([float(Data[i][0])-float(Data[1][0]) for i in range(1,n)])             # Time stored is in milliseconds
-        self.Xobjet=np.array([float(Data[i][1]) for i in range(1,n)])             # Xpos in motor full-steps
-        self.Yobjet=np.array([float(Data[i][2]) for i in range(1,n)])             # Ypos in motor full-steps
-        Zobjet=np.array([float(Data[i][3]) for i in range(1,n)])             # Zpos is in encoder units
-        ThetaWheel=np.array([float(Data[i][4])-float(Data[1][4]) for i in range(1,n)])
-        self.ZobjWheel=np.array([float(Data[i][5])-float(Data[1][5]) for i in range(1,n)])
-        ManualTracking=np.array([int(Data[i][6]) for i in range(1,n)])   # 0 for auto, 1 for manual
-        self.ImageNames=np.array([Data[i][7] for i in range(1,n)])
-        focusMeasure=np.array([float(Data[i][8]) for i in range(1,n)])
-        focusPhase=np.array([float(Data[i][9]) for i in range(1,n)])
-        MaxfocusMeasure=np.array([float(Data[i][10]) for i in range(1,n)])
-        #colorR=np.array([int(Data[i][11]) for i in range(1,n)])
-        #colorG=np.array([int(Data[i][12]) for i in range(1,n)])
-        #colorB=np.array([int(Data[i][13]) for i in range(1,n)])
+        ThetaWheel = np.array(self.df['ThetaWheel'])
+
+
+        self.ZobjWheel =  np.array(self.df['ZobjWheel'])
+
+        ManualTracking = np.array(self.df['Manual Tracking'])
+        self.ImageNames = self.df['Image name']
+        print(self.ImageNames)
+        focusMeasure = np.array(self.df['Focus Measure'])
+        focusPhase = np.array(self.df['Liquid Lens Phase'])
+        MaxfocusMeasure = np.array(self.df['Y FM maximum'])
+
+
+
+        # reader = csv.reader(open(trackPath,newline=''))
+        
+        # for row in reader:
+        #     Data.append(row)
+        # n=len(Data)
+        
+        # self.Time=np.array([float(Data[i][0])-float(Data[1][0]) for i in range(1,n)])             # Time stored is in milliseconds
+        # self.Xobjet=np.array([float(Data[i][1]) for i in range(1,n)])             # Xpos in motor full-steps
+        # self.Yobjet=np.array([float(Data[i][2]) for i in range(1,n)])             # Ypos in motor full-steps
+        # Zobjet=np.array([float(Data[i][3]) for i in range(1,n)])             # Zpos is in encoder units
+        # ThetaWheel=np.array([float(Data[i][4])-float(Data[1][4]) for i in range(1,n)])
+        # self.ZobjWheel=np.array([float(Data[i][5])-float(Data[1][5]) for i in range(1,n)])
+        # ManualTracking=np.array([int(Data[i][6]) for i in range(1,n)])   # 0 for auto, 1 for manual
+        # self.ImageNames=np.array([Data[i][7] for i in range(1,n)])
+        # focusMeasure=np.array([float(Data[i][8]) for i in range(1,n)])
+        # focusPhase=np.array([float(Data[i][9]) for i in range(1,n)])
+        # MaxfocusMeasure=np.array([float(Data[i][10]) for i in range(1,n)])
+        # # self.LED_intensity = np.array([float(Data[i][15]) for i in range(1,n)])
+        # #colorR=np.array([int(Data[i][11]) for i in range(1,n)])
+        # #colorG=np.array([int(Data[i][12]) for i in range(1,n)])
+        # #colorB=np.array([int(Data[i][13]) for i in range(1,n)])
         
         
         # position for the plot
@@ -87,26 +122,26 @@ class CSV_Reader(QtCore.QObject):
 
         #To recenter the data in the case of a bad calibration
         
-        if xmax-xmin>15 and (xmin<-7.5 or xmax>7.5):
+        if xmax-xmin>self.L/2 and (xmin<-self.L/2 or xmax>self.L/2):
             delta_x=-np.mean(self.Xobjet)
             self.Xobjet=self.Xobjet+delta_x
             xmin+=delta_x
             xmax+=delta_x
         
-        elif xmin<-7.5:
-            delta_x=-7.5-xmin
+        elif xmin<-self.L/2:
+            delta_x=-self.L/2-xmin
             self.Xobjet=self.Xobjet+delta_x
             xmin+=delta_x
             xmax+=delta_x
             
-        elif xmax>7.5:
-            delta_x=7.5-xmax
+        elif xmax>self.L/2:
+            delta_x=self.L/2-xmax
             self.Xobjet=self.Xobjet+delta_x
             xmin+=delta_x
             xmax+=delta_x
         
-        if ymax-ymin>3 and (ymin<0 or ymax>3):
-            delta_y=-(np.mean(self.Yobjet)-1.5)
+        if ymax-ymin>self.W and (ymin<0 or ymax>self.W):
+            delta_y=-(np.mean(self.Yobjet)-self.W/2)
             self.Yobjet=self.Yobjet+delta_y
             ymin+=delta_y
             ymax+=delta_y
@@ -117,8 +152,8 @@ class CSV_Reader(QtCore.QObject):
             ymin+=delta_y
             ymax+=delta_y
             
-        elif ymax>3:
-            delta_y=3-ymax
+        elif ymax>self.W:
+            delta_y=self.W-ymax
             self.Yobjet=self.Yobjet+delta_y
             ymin+=delta_y
             ymax+=delta_y
@@ -145,18 +180,21 @@ class CSV_Reader(QtCore.QObject):
         print('data sent')
         
     def send_image_time(self):
-        cropped_ImageNames=self.ImageNames[self.index_min:self.index_max+1]
+        cropped_ImageNames = self.ImageNames[self.index_min:self.index_max+1]
         cropped_Time=self.Time[self.index_min:self.index_max+1]
+        # cropped_LED_intensity = self.LED_intensity[self.index_min:self.index_max+1]
         
         ImageTime=[]
         new_ImageNames=[]
         ImageIndex = []
+        # new_LED_intensity = []
         
         for i in range(len(cropped_ImageNames)):
-            if len(cropped_ImageNames[i])>0:
+            if cropped_ImageNames[i] is not np.nan:
                 ImageIndex.append(i)
                 new_ImageNames.append(cropped_ImageNames[i])
                 ImageTime.append(round(cropped_Time[i],2))
+                # new_LED_intensity.append(cropped_LED_intensity[i])
                 
         # Checking to see if images are updated for a new dataset
         
@@ -164,6 +202,8 @@ class CSV_Reader(QtCore.QObject):
 
         self.ImageNames_data.emit(np.array(new_ImageNames))
         self.ImageTime_data.emit(np.array(ImageTime))
+        # self.LED_intensity_data.emit(np.array(new_LED_intensity))
+        
 #        self.ImageIndex_data.emit(np.array(ImageIndex))
         
         #fps calculation

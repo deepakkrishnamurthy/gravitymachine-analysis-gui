@@ -30,7 +30,10 @@ import matplotlib.colors as Colors
 import rangeslider_functions
 import cv2
 import PIV_Functions
+import scipy.interpolate as interpolate
 imp.reload(PIV_Functions)
+import matplotlib.ticker as ticker
+
 
 #==============================================================================
 #                              Plot Parameters and Functions 
@@ -187,8 +190,8 @@ class gravMachineTrack:
             elif(len(trackFileNames)>1):
                 print('More than one .csv file found! Using the most recent one ...')
                 
-#                self.trackFile = 'track_division.csv'
-                self.trackFile = 'track.csv'
+                self.trackFile = 'track_division.csv'
+#                self.trackFile = 'track.csv'
 
                 print('Loaded {}'.format(self.trackFile))
                 
@@ -759,7 +762,7 @@ class gravMachineTrack:
 
 # Centric diatom
 
-path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
+#path = '/Volumes/DEEPAK-SSD 1/GravityMachine/PuertoRico_2018/GravityMachineData/2018_11_06/Tow_1/Centric_diatom_3_Good'
 
 
 # Noctiluca
@@ -767,10 +770,10 @@ path = '/Volumes/DEEPAK-SSD/GravityMachine/PuertoRico_2018/GravityMachineData/20
         
         
 # Pyrocystic Noctiluca
-#path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div'
+path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div'
 
 Tmin = 0
-Tmax = 2700
+Tmax = 1000
 
 track = gravMachineTrack(path, Tmin, Tmax)
 
@@ -848,252 +851,487 @@ plt.show(block=False)
 #------------------------------------------------------------------------------
 # Load the cell size data
 #------------------------------------------------------------------------------
-#path1 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'  # cell 2 tracked over long time
+path1 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'  # cell 2 tracked over long time
+
+path2 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div' # cell 1 tracked over long times
+
+file1 = '1121_cell_division_data_Full_v3.csv'
+file2 = '1130div_cell_division_data_Full_v3.csv'
+trackData1 = pd.read_csv(os.path.join(path1, file1))
+
+trackData2 = pd.read_csv(os.path.join(path2, file2))
+
+
+
+# 1121
+Time_2 = trackData1.loc[trackData1['Cell number']==2,'Time'] 
+Area_2 = trackData1.loc[trackData1['Cell number']==2,'Area']
+Area_21 = trackData1.loc[trackData1['Cell number']==1,'Area']
+Time_21 = trackData1.loc[trackData1['Cell number']==1,'Time']
+
+# 1130
+Time_1 = trackData2.loc[trackData2['Cell number']==1,'Time']
+ImgNames_1 = trackData2.loc[trackData2['Cell number']==1,'Image']
+Area_1 = trackData2.loc[trackData2['Cell number']==1,'Area']
+Area_12 = trackData2.loc[trackData2['Cell number']==2,'Area']
+Time_12 = trackData2.loc[trackData2['Cell number']==2,'Time']
+
+
+T_split2 = 6750+1357 # 1121
+T_split1 = 6750 #1130
+Time_2 = Time_2 - T_split2
+Time_21 = Time_21 - T_split2
+Time_1 = Time_1 - T_split1
+Time_12 = Time_12 - T_split1
 #
-#path2 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div' # cell 1 tracked over long times
+#Area_dim = Area*(1/314)**2
+
+#Radius = (Area_dim/np.pi)**(1/2)        # Radius in mm
+
+#cmap = cmocean.cm.matter
+cmap = plt.get_cmap('Paired')
+
+color = cmap(np.linspace(0,1,4))
+
+# Plot of area in pixels
+plt.figure()
+
+#plt.plot(Time_12, Area_12, color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
+plt.plot(Time_1, Area_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_21, Area_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_2, Area_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
+plt.xlabel('Time (s)')
+plt.ylabel('Area (px^2)')
+plt.legend()
+#plt.xlim(230,830)
+plt.ylim(500,1750)
+
+plt.show()
+
+
+# Plot of Cell radius in um
+
+Area2Radius = 1000*(1/np.pi)**(1/2)*(1/314)
+
+Radius_1 = (Area_1)**(1/2)*Area2Radius
+Radius_2 = (Area_2)**(1/2)*Area2Radius
+Radius_21 = (Area_21)**(1/2)*Area2Radius
+Radius_12 = (Area_12)**(1/2)*Area2Radius
+
+Radius_1 = pd.rolling_mean(Radius_1,30,center=True)
+Radius_2 = pd.rolling_mean(Radius_2,30,center=True)
+Radius_12 = pd.rolling_mean(Radius_12,30,center=True)
+Radius_21 = pd.rolling_mean(Radius_21,30,center=True)
+#------------------------------------------------------------------------------
+track.V_objFluid = abs(track.V_objFluid)
+V_objFluid_smooth = pd.rolling_mean(track.V_objFluid,30,center=True)
+
+fig, (ax0,ax1, ax2) = plt.subplots(figsize=(8,12),nrows=3,ncols=1,sharex=True)
+
+# Plot of vertical displacement vs time
+ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, color = 'b', label = 'Corrected displacement', linestyle='-', linewidth=2)
+ax0.vlines(292,np.min(track.corrected_disp),np.max(track.corrected_disp),'r',linestyle='--')
+ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
+
+#ax0.set_ylabel('Displacement (z) mm')
+
+# Plot of vertical velocity vs time
+ax1.plot(track.df['Time'][track.imageIndex_array],track.V_objFluid, color = 'darkblue', label = 'Corrected displacement', linestyle='-', linewidth=2, alpha =0.5)
+ax1.plot(track.df['Time'][track.imageIndex_array],V_objFluid_smooth, color = 'k', label = 'Corrected displacement', linestyle='-', linewidth=2)
+ax1.vlines(292,np.min(track.V_objFluid),np.max(track.V_objFluid),'r',linestyle='--')
+#ax1.set_ylabel('Sedimentation speed mm/s')
+ax1.set_ylim(np.min(track.V_objFluid), 0.12)
+
+# Plot of Cell size vs time
+ax2.plot(Time_1, 2*Radius_1, color = color[0],label = 'Track 1, Cell 1',alpha = 1,linewidth=2, zorder=1, linestyle=':')
+ax2.plot(Time_12, 2*Radius_12 , color = color[2],label = 'Track 1, Cell 2', alpha = 1,linewidth=2,zorder=20,linestyle='--')
+ax2.plot(Time_21, 2*Radius_21, color = color[1],label = 'Track 2, Cell 1',alpha = 1,linewidth=2,zorder=10,linestyle='-')
+ax2.plot(Time_2, 2*Radius_2, color = color[3],label = 'Track 2, Cell 2',alpha = 1,linewidth=2,zorder=4,linestyle='-.')
+ax2.set_xlabel('Time (s)')
+#ax2.set_ylabel('Cell diameter (um)')
+ax2.set_yticks([75, 100, 125, 150])
+ax2.vlines(292,70,150,'r',linestyle='--')
+ax2.set_ylim(70,150)
+
+ax2.set_xlim(0,1000)
+
+ax2.legend(fontsize=10, loc =4)
+
+ratio = 0.35
+for ax in [ax0, ax1, ax2]:
+    xmin, xmax = ax.get_xlim()
+    ymin, ymax = ax.get_ylim()
+    print((xmax-xmin)/(ymax-ymin))
+    ax.set_aspect(abs((xmax-xmin)/(ymax-ymin))*ratio, adjustable='box-forced')
+
+plt.show(block=False)
+
+#------------------------------------------------------------------------------
+# Pyrocystis noctiluca Movie: 
+# Saves images of the Displacement, Velocity and Cell size time-series data
+#------------------------------------------------------------------------------
+#==============================================================================
+#                              Plot Parameters and Functions 
+#==============================================================================
+from matplotlib import rcParams
+from matplotlib import rc
+plt.style.use('dark_background')
+plt.close("all")
+
+
+
+rootFolder = path
+
+Folder = 'Pyro_1130_timeSeries_plots'
+
+savePath= os.path.join(rootFolder, Folder)
+
+if(not os.path.exists(savePath)):
+    os.makedirs(savePath)
+
+start_image = 'IMG_0021194.tif'
+stop_image = 'IMG_0022047.tif'
+
+start_index = int(np.argwhere(track.df['Image name'][track.imageIndex_array] == start_image))
+stop_index = int(np.argwhere(track.df['Image name'][track.imageIndex_array] == stop_image))
+
+
+
+Time_1 = np.array(Time_1)
+
+Radius_1 = np.array(Radius_1)
+
+
+fig, (ax0,ax1, ax2) = plt.subplots(figsize=(8,12),nrows=3,ncols=1,sharex=True)
+
+
+for ii in range(start_index, stop_index):
+
+
+    time = Time_1[ii]
+    
+    ax0.cla()
+    ax1.cla()
+    ax2.cla()
+    
+    # Plot of vertical displacement vs time
+    ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, color = 'b', label = 'Corrected displacement', linestyle='-', linewidth=2)
+#    ax0.vlines(292,np.min(track.corrected_disp),np.max(track.corrected_disp),'r',linestyle='--')
+    
+    ax0.vlines(x = time, ymin = np.min(track.corrected_disp), ymax = np.max(track.corrected_disp),color='r',linewidth=2, zorder = 10, alpha=0.5)
+
+    scat = ax0.scatter(time, track.corrected_disp[ii], 30, color='r', zorder = 10, alpha=0.5)
+    
+    ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
+    
+    #ax0.set_ylabel('Displacement (z) mm')
+    
+    # Plot of vertical velocity vs time
+#    ax1.plot(track.df['Time'][track.imageIndex_array],track.V_objFluid, color = 'darkblue', label = 'Corrected displacement', linestyle='-', linewidth=2, alpha =0.5)
+    ax1.plot(track.df['Time'][track.imageIndex_array],V_objFluid_smooth, color = 'violet', label = 'Corrected displacement', linestyle='-', linewidth=2, alpha=0.5)
+ 
+    ax1.vlines(x = time, ymin = 0, ymax = 0.12,color='r',linewidth=2, zorder = 10, alpha=0.5)
+    scat = ax1.scatter(time, V_objFluid_smooth[ii], 30, color='r', zorder = 10, alpha=0.5)
+#    ax1.vlines(292,np.min(track.V_objFluid),np.max(track.V_objFluid),'r',linestyle='--')
+    #ax1.set_ylabel('Sedimentation speed mm/s')
+    ax1.set_ylim(0, 0.12)
+    
+    # Plot of Cell size vs time
+    ax2.plot(Time_1, 2*Radius_1, color = color[0],label = 'Track 1, Cell 1',alpha = 1,linewidth=2, zorder=1, linestyle=':')
+    #ax2.plot(Time_12, 2*Radius_12 , color = color[2],label = 'Track 1, Cell 2', alpha = 1,linewidth=2,zorder=20,linestyle='--')
+    #ax2.plot(Time_21, 2*Radius_21, color = color[1],label = 'Track 2, Cell 1',alpha = 1,linewidth=2,zorder=10,linestyle='-')
+    #ax2.plot(Time_2, 2*Radius_2, color = color[3],label = 'Track 2, Cell 2',alpha = 1,linewidth=2,zorder=4,linestyle='-.')
+    
+    ax2.vlines(x = time, ymin = 70, ymax = 150,color='r',linewidth=2, zorder = 10, alpha=0.5)
+    scat = ax2.scatter(time, 2*Radius_1[ii], 30, color='r', zorder = 10, alpha=0.5)
+    
+    
+    ax2.set_xlabel('Time (s)')
+    #ax2.set_ylabel('Cell diameter (um)')
+    ax2.set_yticks([75, 100, 125, 150])
+#    ax2.vlines(292,70,150,'r',linestyle='--')
+    ax2.set_ylim(70,150)
+    
+    ax2.set_xlim(0,1000)
+    
+    ax2.legend(fontsize=10, loc =4)
+    
+    ratio = 0.35
+    for ax in [ax0, ax1, ax2]:
+        xmin, xmax = ax.get_xlim()
+        ymin, ymax = ax.get_ylim()
+        print((xmax-xmin)/(ymax-ymin))
+        ax.set_aspect(abs((xmax-xmin)/(ymax-ymin))*ratio, adjustable='box-forced')
+    
+    ax0.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    
+#    plt.subplots_adjust(left=0.2, bottom=0.15, right=0.95, top=0.95, wspace=0, hspace=0)
+    
+    
+    img_name = 'Plot_'+track.df['Image name'][track.imageIndex_array[ii]]
+    print(img_name)
+    plt.savefig(os.path.join(savePath,img_name), dpi=150)
+    
+    
+    
+    plt.pause(0.001)
+    plt.show(block=False)
+
+
+
+
+
+#=================================================================================================
+##------------------------------------------------------------------------------
+# Centric Diatoms
+# Detect the changes in the sinking speeds and highlight them on the plot
+##------------------------------------------------------------------------------
+# Fit a linear fit to the vertical displacement
+##------------------------------------------------------------------------------
+
+#p = np.polyfit(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, deg=1)
 #
-#file1 = '1121_cell_division_data_Full_v3.csv'
-#file2 = '1130div_cell_division_data_Full_v3.csv'
-#trackData1 = pd.read_csv(os.path.join(path1, file1))
+#linearFit = track.df['Time'][track.imageIndex_array[:-1]]*p[0]+p[1]
 #
-#trackData2 = pd.read_csv(os.path.join(path2, file2))
+##disp_smoothed = pd.rolling_mean(track.corrected_disp, window=500)
 #
+#fig, ax0 = plt.subplots()
 #
+#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, color = 'b', label = 'Corrected displacement', linestyle='-', linewidth=2)
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],linearFit, color = 'r', label = 'Linear fit', linestyle='-', linewidth=2)
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],disp_smoothed, color = 'r', label = 'Rolling mean', linestyle='-', linewidth=2)
 #
-## 1121
-#Time_2 = trackData1.loc[trackData1['Cell number']==2,'Time'] 
-#Area_2 = trackData1.loc[trackData1['Cell number']==2,'Area']
-#Area_21 = trackData1.loc[trackData1['Cell number']==1,'Area']
-#Time_21 = trackData1.loc[trackData1['Cell number']==1,'Time']
+#ax0.set_ylabel('Displacement (z) mm')
 #
-## 1130
-#Time_1 = trackData2.loc[trackData2['Cell number']==1,'Time']
-#Area_1 = trackData2.loc[trackData2['Cell number']==1,'Area']
-#Area_12 = trackData2.loc[trackData2['Cell number']==2,'Area']
-#Time_12 = trackData2.loc[trackData2['Cell number']==2,'Time']
+#plt.show()
 #
+#Residue = track.corrected_disp - linearFit
 #
-#T_split2 = 6750+1357 # 1121
-#T_split1 = 6750 #1130
-#Time_2 = Time_2 - T_split2
-#Time_21 = Time_21 - T_split2
-#Time_1 = Time_1 - T_split1
-#Time_12 = Time_12 - T_split1
-##
-##Area_dim = Area*(1/314)**2
+#Time_loc = track.df['Time'][track.imageIndex_array[:-1]]
 #
-##Radius = (Area_dim/np.pi)**(1/2)        # Radius in mm
+#fig, ax0 = plt.subplots()
 #
-##cmap = cmocean.cm.matter
-#cmap = plt.get_cmap('Paired')
+#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],Residue, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
 #
-#color = cmap(np.linspace(0,1,4))
-#
-## Plot of area in pixels
-#plt.figure()
-#
-##plt.plot(Time_12, Area_12, color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
-#plt.plot(Time_1, Area_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_21, Area_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_2, Area_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
-#plt.xlabel('Time (s)')
-#plt.ylabel('Area (px^2)')
-#plt.legend()
-##plt.xlim(230,830)
-#plt.ylim(500,1750)
+#ax0.set_ylabel('Displacement (z) mm')
 #
 #plt.show()
 #
 #
-## Plot of Cell radius in um
+#Residue = pd.rolling_mean(Residue, window=10)
 #
-#Area2Radius = 1000*(1/np.pi)**(1/2)*(1/314)
 #
-#Radius_1 = (Area_1)**(1/2)*Area2Radius
-#Radius_2 = (Area_2)**(1/2)*Area2Radius
-#Radius_21 = (Area_21)**(1/2)*Area2Radius
-#Radius_12 = (Area_12)**(1/2)*Area2Radius
+## Pickle the peak locations for future use
 #
-#Radius_1 = pd.rolling_mean(Radius_1,30,center=True)
-#Radius_2 = pd.rolling_mean(Radius_2,30,center=True)
-#Radius_12 = pd.rolling_mean(Radius_12,30,center=True)
-#Radius_21 = pd.rolling_mean(Radius_21,30,center=True)
-##------------------------------------------------------------------------------
-#track.V_objFluid = abs(track.V_objFluid)
-#V_objFluid_smooth = pd.rolling_mean(track.V_objFluid,30,center=True)
+#saveFile = 'peak_locs.pkl'
 #
-#fig, (ax0,ax1, ax2) = plt.subplots(figsize=(8,12),nrows=3,ncols=1,sharex=True)
+#overwrite = False
 #
-## Plot of vertical displacement vs time
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, color = 'b', label = 'Corrected displacement', linestyle='-', linewidth=2)
-#ax0.vlines(292,np.min(track.corrected_disp),np.max(track.corrected_disp),'r',linestyle='--')
-#ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
-#
-##ax0.set_ylabel('Displacement (z) mm')
-#
-## Plot of vertical velocity vs time
-#ax1.plot(track.df['Time'][track.imageIndex_array],track.V_objFluid, color = 'darkblue', label = 'Corrected displacement', linestyle='-', linewidth=2, alpha =0.5)
-#ax1.plot(track.df['Time'][track.imageIndex_array],V_objFluid_smooth, color = 'k', label = 'Corrected displacement', linestyle='-', linewidth=2)
-#ax1.vlines(292,np.min(track.V_objFluid),np.max(track.V_objFluid),'r',linestyle='--')
-##ax1.set_ylabel('Sedimentation speed mm/s')
-#ax1.set_ylim(np.min(track.V_objFluid), 0.12)
-#
-## Plot of Cell size vs time
-#ax2.plot(Time_1, 2*Radius_1, color = color[0],label = 'Track 1, Cell 1',alpha = 1,linewidth=2, zorder=1, linestyle=':')
-#ax2.plot(Time_12, 2*Radius_12 , color = color[2],label = 'Track 1, Cell 2', alpha = 1,linewidth=2,zorder=20,linestyle='--')
-#ax2.plot(Time_21, 2*Radius_21, color = color[1],label = 'Track 2, Cell 1',alpha = 1,linewidth=2,zorder=10,linestyle='-')
-#ax2.plot(Time_2, 2*Radius_2, color = color[3],label = 'Track 2, Cell 2',alpha = 1,linewidth=2,zorder=4,linestyle='-.')
-#ax2.set_xlabel('Time (s)')
-##ax2.set_ylabel('Cell diameter (um)')
-#ax2.set_yticks([75, 100, 125, 150])
-#ax2.vlines(292,70,150,'r',linestyle='--')
-#ax2.set_ylim(70,150)
-#
-#ax2.set_xlim(0,1000)
-#
-#ax2.legend(fontsize=10, loc =4)
-#
-#ratio = 0.35
-#for ax in [ax0, ax1, ax2]:
-#    xmin, xmax = ax.get_xlim()
-#    ymin, ymax = ax.get_ylim()
-#    print((xmax-xmin)/(ymax-ymin))
-#    ax.set_aspect(abs((xmax-xmin)/(ymax-ymin))*ratio, adjustable='box-forced')
-#
-#plt.show(block=False)
-##
-#
-# Detect the changes in the sinking speeds and highlight them on the plot
-
-# Fit a linear fit to the vertical displacement
-
-p = np.polyfit(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, deg=1)
-
-linearFit = track.df['Time'][track.imageIndex_array[:-1]]*p[0]+p[1]
-
-#disp_smoothed = pd.rolling_mean(track.corrected_disp, window=500)
-
-fig, ax0 = plt.subplots()
-
-ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp, color = 'b', label = 'Corrected displacement', linestyle='-', linewidth=2)
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],linearFit, color = 'r', label = 'Linear fit', linestyle='-', linewidth=2)
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],disp_smoothed, color = 'r', label = 'Rolling mean', linestyle='-', linewidth=2)
-
-ax0.set_ylabel('Displacement (z) mm')
-
-plt.show()
-
-Residue = track.corrected_disp - linearFit
-
-Time_loc = track.df['Time'][track.imageIndex_array[:-1]]
-
-fig, ax0 = plt.subplots()
-
-ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],Residue, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-
-ax0.set_ylabel('Displacement (z) mm')
-
-plt.show()
-
-
-Residue = pd.rolling_mean(Residue, window=10)
-
-# Detect the peaks in the Residual time series
-peaks= scipy.signal.find_peaks(Residue, distance=None,width=None,prominence=(0.1,20))
-
-peaks = peaks[0]
-
-peaks_neg= scipy.signal.find_peaks(-Residue, distance=None,width=1,prominence=(0.1,20))
-
-peaks_neg = peaks_neg[0]
-
-peak_indicator = []
-peak_neg_indicator = []
-   
-for j in peaks:
-    peak_indicator.append(j)
-    
-for j in peaks_neg:
-    peak_neg_indicator.append(j)
-    
-missingPeakloc = 78152
-
-Time_index = Time_loc.keys()
-
-index = int(np.squeeze(np.where(Time_index==missingPeakloc)))
-
-print(index)    
-
-peak_neg_indicator.append(index)
-peak_neg_indicator.sort()
-print(len(peak_indicator))
-print(len(peak_neg_indicator))
-    
-    
-    
-fig, ax0 = plt.subplots()
-
-ax0.plot(Time_loc, Residue, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-ax0.vlines(Time_loc.iloc[peak_indicator],np.min(Residue), np.max(Residue), color='r')
-ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(Residue), np.max(Residue), color='g')
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-
-ax0.set_ylabel('Displacement (z) mm')
-
-plt.show()
-
-
-
-
-fig, (ax0,ax1) = plt.subplots(figsize=(12,16),nrows=2,sharex=True)
-
-ax0.plot(Time_loc, track.corrected_disp , color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-
-for jj in range(0,len(peak_neg_indicator)-1):
-    ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], track.corrected_disp[peak_indicator[jj] : peak_neg_indicator[jj+1]], y2 = np.min(track.corrected_disp), color = 'r', alpha = 0.3)
-#ax0.vlines(Time_loc.iloc[peak_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_indicator], color='r')
-#ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_neg_indicator], color='g')
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-
-ax0.set_ylabel('Displacement (z) mm')
-#ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
-ax0.set_ylim(-20,0)
-
-ax1.plot(track.df['Time'][track.imageIndex_array], track.V_objFluid , color = 'darkblue', label = 'Residual', linestyle='-', linewidth=2)
-
-for jj in range(0,len(peak_neg_indicator)-1):
-    ax1.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.3)
-#ax0.vlines(Time_loc.iloc[peak_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_indicator], color='r')
-#ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_neg_indicator], color='g')
-#ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
-
-ax1.set_ylabel('Velocity (z) mm/s')
-ax1.set_xlim(40, 400)
-#ax1.set_ylim(np.min(track.V_objFluid), np.max(track.V_objFluid))
-
-
-plt.show()
+#if(not os.path.exists(os.path.join(path, saveFile)) or overwrite == True):
 #    
 #
-## Velocity distribution and statistics
+#    # Detect the peaks in the Residual time series
+#    peaks= scipy.signal.find_peaks(Residue, distance=None,width=None,prominence=(0.1,20))
+#    
+#    peaks = peaks[0]
+#    
+#    peaks_neg= scipy.signal.find_peaks(-Residue, distance=None,width=1,prominence=(0.1,20))
+#    
+#    peaks_neg = peaks_neg[0]
+#    
+#    peak_indicator = []
+#    peak_neg_indicator = []
+#       
+#    for j in peaks:
+#        peak_indicator.append(j)
+#        
+#    for j in peaks_neg:
+#        peak_neg_indicator.append(j)
+#        
+#    missingPeakloc = 78152
+#    
+#    Time_index = Time_loc.keys()
+#    
+##    Time_index = track.df['Time'].keys()
+#    
+#    index = int(np.squeeze(np.where(Time_index==missingPeakloc)))
+#    
+#    print(index)    
+#    
+#    peak_neg_indicator.append(index)
+#    peak_neg_indicator.sort()
+#    print(len(peak_indicator))
+#    print(len(peak_neg_indicator))
+#    
+#    with open(os.path.join(path,saveFile),'wb') as f:
+#        pickle.dump((peak_indicator, peak_neg_indicator), f)
+#        
+#else:
+#    
+#    with open(os.path.join(path, saveFile),'rb') as f:
+#        peak_indicator, peak_neg_indicator = pickle.load(f)
+#    
 #
-Vel_mean = np.nanmean(track.V_objFluid)
-Vel_std = np.nanstd(track.V_objFluid)
+#
+#    
+#    
+#fig, ax0 = plt.subplots()
+#
+#ax0.plot(Time_loc, Residue, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+#ax0.vlines(Time_loc.iloc[peak_indicator],np.min(Residue), np.max(Residue), color='r')
+#ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(Residue), np.max(Residue), color='g')
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+#
+#ax0.set_ylabel('Displacement (z) mm')
+#
+#plt.show()
+#
+#
+## Calculate the velocity during slow and fast sinking compute statistics
+#
+#Time_loc = np.array(Time_loc)
+#mask = np.zeros(len(track.V_objFluid), dtype='bool')
+#
+#Blink_durations = []
+#Blink_intervals = []
+#for jj in range(0,len(peak_neg_indicator)-1):  
+#
+#    mask[peak_indicator[jj] : peak_neg_indicator[jj+1]] = 1
+#    Blink_durations.append(Time_loc[peak_neg_indicator[jj+1]] - Time_loc[peak_indicator[jj]])
+#    Blink_intervals.append(Time_loc[peak_indicator[jj+1]] - Time_loc[peak_neg_indicator[jj]])
+#
+#
+#fig, (ax0,ax1) = plt.subplots(figsize=(12,16),nrows=2,sharex=True)
+#
+#ax0.plot(Time_loc, track.corrected_disp , color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+#
+#for jj in range(0,len(peak_neg_indicator)-1):
+#    ax0.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], track.corrected_disp[peak_indicator[jj] : peak_neg_indicator[jj+1]], y2 = np.min(track.corrected_disp), color = 'r', alpha = 0.3)
+##ax0.vlines(Time_loc.iloc[peak_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_indicator], color='r')
+##ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_neg_indicator], color='g')
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+#
+#ax0.set_ylabel('Displacement (z) mm')
+##ax0.set_ylim(np.min(track.corrected_disp), np.max(track.corrected_disp))
+#ax0.set_ylim(-20,0)
+#
+#ax1.plot(track.df['Time'][track.imageIndex_array], track.V_objFluid , color = 'darkblue', label = 'Residual', linestyle='-', linewidth=2)
+#
+#for jj in range(0,len(peak_neg_indicator)-1):
+#    ax1.fill_between(Time_loc[peak_indicator[jj] : peak_neg_indicator[jj+1]], y1 = np.max(track.V_objFluid), y2 = np.min(track.V_objFluid), color = 'r', alpha = 0.3)
+##ax0.vlines(Time_loc.iloc[peak_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_indicator], color='r')
+##ax0.vlines(Time_loc.iloc[peak_neg_indicator],np.min(track.corrected_disp), track.corrected_disp[peak_neg_indicator], color='g')
+##ax0.plot(track.df['Time'][track.imageIndex_array[:-1]],track.corrected_disp - disp_smoothed, color = 'b', label = 'Residual', linestyle='-', linewidth=2)
+#
+#ax1.set_ylabel('Velocity (z) mm/s')
+##ax1.set_xlim(40, 400)
+##ax1.set_ylim(np.min(track.V_objFluid), np.max(track.V_objFluid))
+#
+#
+#plt.show()
+##    
+##
+### Velocity distribution and statistics
+##
+#Vel_mean = np.nanmean(track.V_objFluid)
+#Vel_std = np.nanstd(track.V_objFluid)
+#
+##Vel_mean = np.nanmean(track.Vz)
+##Vel_std = np.nanstd(track.Vz)
+#
+#
+#plt.figure(figsize=(4.5,4))
+#ax0 = sns.distplot(track.V_objFluid[~np.isnan(track.V_objFluid)],  kde = True , color = 'b', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
+##ax0 = sns.distplot(track.Vz,  kde = True , color = 'b', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
+#
+#
+#
+#V_fast_mean = np.nanmean(track.V_objFluid[mask])
+#    
+#V_fast_std = np.nanstd(track.V_objFluid[mask])
+#
+#V_slow_mean = np.nanmean(track.V_objFluid[~mask])
+#    
+#V_slow_std = np.nanstd(track.V_objFluid[~mask])
+#
+#
+#mean_blink_durations = np.nanmean(Blink_durations)
+#
+#std_blink_durations = np.nanstd(Blink_durations)
+#
+#mean_blink_intervals = np.nanmean(Blink_intervals)
+#
+#std_blink_intervals = np.nanstd(Blink_intervals)
+#
+#    
+#
+## Align the vertical velocity traces at the transition points to observe the mean behavior
+#T_len = 200
+#
+#
+#slow_fast = pd.DataFrame({'Time':[], 'Transition type':[],'Vertical velocity':[]})
+#fast_slow = pd.DataFrame({'Time':[], 'Transition type':[],'Vertical velocity':[]})
+#
+#halfSize = int(T_len/2)
+#
+#
+#Time_loc_interp = np.linspace(Time_loc[0], Time_loc[-1],len(Time_loc))
+#
+#func_V = interpolate.interp1d(Time_loc, track.V_objFluid[:-1], kind = 'linear')
+#
+#V_fluid_interp = func_V(Time_loc_interp)
+#
+#plt.figure()
+#
+#for index in peak_indicator:
+#    
+##    if(index - halfSize > 0 and index + halfSize < len(Time_loc)):
+#        
+#    T_aligned = Time_loc_interp[index - halfSize : index + halfSize] - Time_loc_interp[index]
+#    V_aligned = V_fluid_interp[index - halfSize : index + halfSize]
+#    
+#    transition_type = np.repeat(['Slow-fast'],len(T_aligned))
+#    
+#    slow_fast = slow_fast.append(pd.DataFrame({'Time':T_aligned, 'Transition type':transition_type, 'Vertical velocity':V_aligned}))
+#      
+#    plt.scatter(T_aligned, V_aligned,20, alpha = 0.5)
+#    
+#
+#plt.show()
+#        
+#plt.figure()
+#for index in peak_neg_indicator:
+#    
+##    if(index - halfSize > 0 and index + halfSize < len(Time_loc)):
+#        
+#    T_aligned = Time_loc_interp[index - halfSize : index + halfSize] - Time_loc_interp[index]
+#    V_aligned = V_fluid_interp[index - halfSize : index + halfSize]
+#    
+#    transition_type = np.repeat(['Fast-slow'],len(T_aligned))
+#    
+#    fast_slow = fast_slow.append(pd.DataFrame({'Time':T_aligned, 'Transition type':transition_type, 'Vertical velocity':V_aligned}))
+#      
+#    plt.scatter(T_aligned, V_aligned,20, alpha = 0.5)
+#    
+#    
+#plt.show()
+#
+#        
+#        
+#        
+## Plot the aligned velocity traces
+#        
+#plt.figure()
+#sns.lineplot(x='Time', y = 'Vertical velocity', data = slow_fast)
+#plt.show()
+#    
+#plt.figure()
+#sns.lineplot(x='Time', y = 'Vertical velocity', data = fast_slow)
+#plt.show()    
 
-#Vel_mean = np.nanmean(track.Vz)
-#Vel_std = np.nanstd(track.Vz)
-
-
-plt.figure(figsize=(4.5,4))
-ax0 = sns.distplot(track.V_objFluid[~np.isnan(track.V_objFluid)],  kde = True , color = 'b', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
-#ax0 = sns.distplot(track.Vz,  kde = True , color = 'b', norm_hist = True, hist_kws={"histtype": "bar","edgecolor":'w', "linewidth": 0.2, "alpha": 0.5, "label":'Vz'})
-
-
-
-
-
-    
     
 
 

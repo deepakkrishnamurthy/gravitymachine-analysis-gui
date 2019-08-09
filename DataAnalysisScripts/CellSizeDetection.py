@@ -1188,12 +1188,12 @@ class gravMachineTrack:
 # Pyro division tracks
 cv2.destroyAllWindows()
 #        
-path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'
-#
-Tmin = 0
-Tmax = 0
-###
-track = gravMachineTrack(path, Tmin, Tmax)
+#path = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'
+##
+#Tmin = 0
+#Tmax = 0
+####
+#track = gravMachineTrack(path, Tmin, Tmax)
 
 
 
@@ -1232,91 +1232,91 @@ track = gravMachineTrack(path, Tmin, Tmax)
 #==============================================================================
 # Plots of cell size vs time using the assimilated data
 #==============================================================================
-#path1 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'  # cell 2 tracked over long time
+path1 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1121'  # cell 2 tracked over long time
+
+path2 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div' # cell 1 tracked over long times
+
+file1 = '1121_cell_division_data_Full_v3.csv'
+file2 = '1130div_cell_division_data_Full_v3.csv'
+trackData1 = pd.read_csv(os.path.join(path1, file1))
+
+trackData2 = pd.read_csv(os.path.join(path2, file2))
+
+
+
+# 1121
+Time_2 = trackData1.loc[trackData1['Cell number']==2,'Time'] 
+Area_2 = trackData1.loc[trackData1['Cell number']==2,'Area']
+Area_21 = trackData1.loc[trackData1['Cell number']==1,'Area']
+Time_21 = trackData1.loc[trackData1['Cell number']==1,'Time']
+
+# 1130
+Time_1 = trackData2.loc[trackData2['Cell number']==1,'Time']
+Area_1 = trackData2.loc[trackData2['Cell number']==1,'Area']
+Area_12 = trackData2.loc[trackData2['Cell number']==2,'Area']
+Time_12 = trackData2.loc[trackData2['Cell number']==2,'Time']
+
+
+T_split2 = 6750+1357 # 1121
+T_split1 = 6750 #1130
+Time_2 = Time_2 - T_split2
+Time_21 = Time_21 - T_split2
+Time_1 = Time_1 - T_split1
+Time_12 = Time_12 - T_split1
 #
-#path2 = '/Volumes/DEEPAK-SSD/Pyro_Division_Tracks/1130div' # cell 1 tracked over long times
-#
-#file1 = '1121_cell_division_data_Full_v3.csv'
-#file2 = '1130div_cell_division_data_Full_v3.csv'
-#trackData1 = pd.read_csv(os.path.join(path1, file1))
-#
-#trackData2 = pd.read_csv(os.path.join(path2, file2))
-#
-#
-#
-## 1121
-#Time_2 = trackData1.loc[trackData1['Cell number']==2,'Time'] 
-#Area_2 = trackData1.loc[trackData1['Cell number']==2,'Area']
-#Area_21 = trackData1.loc[trackData1['Cell number']==1,'Area']
-#Time_21 = trackData1.loc[trackData1['Cell number']==1,'Time']
-#
-## 1130
-#Time_1 = trackData2.loc[trackData2['Cell number']==1,'Time']
-#Area_1 = trackData2.loc[trackData2['Cell number']==1,'Area']
-#Area_12 = trackData2.loc[trackData2['Cell number']==2,'Area']
-#Time_12 = trackData2.loc[trackData2['Cell number']==2,'Time']
-#
-#
-#T_split2 = 6750+1357 # 1121
-#T_split1 = 6750 #1130
-#Time_2 = Time_2 - T_split2
-#Time_21 = Time_21 - T_split2
-#Time_1 = Time_1 - T_split1
-#Time_12 = Time_12 - T_split1
-##
-##Area_dim = Area*(1/314)**2
-#
-##Radius = (Area_dim/np.pi)**(1/2)        # Radius in mm
-#
-#cmap = cmocean.cm.matter
-#
-#color = cmap(np.linspace(0,1,4))
-#
-## Plot of area in pixels
-#plt.figure()
-#
-##plt.plot(Time_12, Area_12, color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
-#plt.plot(Time_1, Area_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_21, Area_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_2, Area_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
-#plt.xlabel('Time (s)')
-#plt.ylabel('Area (px^2)')
-#plt.legend()
-##plt.xlim(230,830)
-#plt.ylim(500,1750)
-#
-#plt.show()
-#
-#
-## Plot of Cell radius in um
-#
-#Area2Radius = 1000*(1/np.pi)**(1/2)*(1/314)
-#
-#Radius_1 = (Area_1)**(1/2)*Area2Radius
-#Radius_2 = (Area_2)**(1/2)*Area2Radius
-#Radius_21 = (Area_21)**(1/2)*Area2Radius
-#Radius_12 = (Area_12)**(1/2)*Area2Radius
-#
-#Radius_1 = pd.rolling_mean(Radius_1,30,center=True)
-#Radius_2 = pd.rolling_mean(Radius_2,30,center=True)
-#Radius_12 = pd.rolling_mean(Radius_12,30,center=True)
-#Radius_21 = pd.rolling_mean(Radius_21,30,center=True)
-#
-#
-#
-#plt.figure()
-#
-#plt.plot(Time_12, 2*Radius_12 , color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
-#plt.plot(Time_1, 2*Radius_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_21, 2*Radius_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
-#plt.plot(Time_2, 2*Radius_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
-#plt.xlabel('Time (s)')
-#plt.ylabel('Cell diameter (um)')
-#plt.legend()
-##plt.xlim(0,1000)
-##plt.ylim(75,150)
-#
-#plt.show()
+#Area_dim = Area*(1/314)**2
+
+#Radius = (Area_dim/np.pi)**(1/2)        # Radius in mm
+
+cmap = cmocean.cm.matter
+
+color = cmap(np.linspace(0,1,4))
+
+# Plot of area in pixels
+plt.figure()
+
+#plt.plot(Time_12, Area_12, color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
+plt.plot(Time_1, Area_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_21, Area_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_2, Area_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
+plt.xlabel('Time (s)')
+plt.ylabel('Area (px^2)')
+plt.legend()
+#plt.xlim(230,830)
+plt.ylim(500,1750)
+
+plt.show()
+
+
+# Plot of Cell radius in um
+
+Area2Radius = 1000*(1/np.pi)**(1/2)*(1/314)
+
+Radius_1 = (Area_1)**(1/2)*Area2Radius
+Radius_2 = (Area_2)**(1/2)*Area2Radius
+Radius_21 = (Area_21)**(1/2)*Area2Radius
+Radius_12 = (Area_12)**(1/2)*Area2Radius
+
+Radius_1 = pd.rolling_mean(Radius_1,30,center=True)
+Radius_2 = pd.rolling_mean(Radius_2,30,center=True)
+Radius_12 = pd.rolling_mean(Radius_12,30,center=True)
+Radius_21 = pd.rolling_mean(Radius_21,30,center=True)
+
+
+
+plt.figure()
+
+plt.plot(Time_12, 2*Radius_12 , color = color[0],label = 'Track 1, Cell 2', alpha = 0.8,linewidth=3)
+plt.plot(Time_1, 2*Radius_1, color = color[1],label = 'Track 1, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_21, 2*Radius_21, color = color[2],label = 'Track 2, Cell 1',alpha = 0.8,linewidth=3)
+plt.plot(Time_2, 2*Radius_2, color = color[3],label = 'Track 2, Cell 2',alpha = 0.8,linewidth=3)
+plt.xlabel('Time (s)')
+plt.ylabel('Cell diameter (um)')
+plt.legend()
+#plt.xlim(0,1000)
+#plt.ylim(75,150)
+
+plt.show()
 
 
 #==============================================================================

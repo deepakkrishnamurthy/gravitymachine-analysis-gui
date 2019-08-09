@@ -45,11 +45,11 @@ from matplotlib.patches import Circle, Wedge, Polygon
 # General Functions
 #==============================================================================
 def deltaT():
-    return 1/3000
+    return 1/33
 def mmPerPixel():
-    return 1/100   #for a 1440x1080 image
+    return 1/314   #for a 1440x1080 image
 def pixelPermm():
-    return 100
+    return 314
 
 def data2RealUnits(data,scale=1.0):
     return data*scale
@@ -150,11 +150,11 @@ def pivPostProcess(u,v,sig2noise,sig2noise_min=1.5,smoothing_param=2.0):
 def plotPIVdata(image,x,y,u,v, orgContour, Centroids = None, figname=1,show = 0,saveFileName=None):
     # Plots the PIV vector field overlaid on the raw image
     imH, imW, *rest = np.shape(image)
-    
-    maskInside = pointInContour(np.flipud(x),np.flipud(y),orgContour)
-    x, y = (x*mmPerPixel(), y*mmPerPixel())
-    u[maskInside] = np.nan
-    v[maskInside] = np.nan
+    if(orgContour is not None):
+        maskInside = pointInContour(np.flipud(x),np.flipud(y),orgContour)
+        x, y = (x*mmPerPixel(), y*mmPerPixel())
+        u[maskInside] = np.nan
+        v[maskInside] = np.nan
     U = velMag(u,v)
     
        
@@ -323,6 +323,10 @@ imgFormat = ['.png','.svg']
     
 dataFolder = '/Volumes/DEEPAK-SSD/GravityMachine/AbioticExperiments/2017_06_20_PencilLeads/HighSpeedExperiments/Ds17_Processed'
 
+dataFolder = '/Volumes/DEEPAK-SSD/GravityMachine/ControlExperiments_backup/ThermalFlowsCalib/BeforeMixing_Isothermalization/images'
+
+findContours = False
+
 FilesList = os.listdir(dataFolder)
 
 #FilesList.sort()
@@ -364,11 +368,13 @@ imHeight = 680
 
 overwrite = True
 
+nImages = 100
+
 try:
     
-    step = 100
+    step = 1
     
-    index = range(0,len(FilesList)-1,step)
+    index = range(0,nImages,step)
     
     colors = plt.cm.plasma(np.linspace(0, 1, len(index)))
     
@@ -415,15 +421,15 @@ try:
         #--------------------------------------------------------------------------
         # Threshold the image to extract the object regions
         #--------------------------------------------------------------------------
-        Contours = findContours(frame_a_color,thresh_low,thresh_high,'all')
+        if(findContours):
+            Contours = findContours(frame_a_color,thresh_low,thresh_high,'all')
         
-        
-        
-    
-        Centroids = findCentroids(Contours)
-        # Note that to find the mask we need to consider the Up-down flipped matrix of the positions to follow the image convention
-        maskInside = pointInContour(np.flipud(x),np.flipud(y),Contours)
+            Centroids = findCentroids(Contours)
+            # Note that to find the mask we need to consider the Up-down flipped matrix of the positions to follow the image convention
+            maskInside = pointInContour(np.flipud(x),np.flipud(y),Contours)
             
+        else:
+            Contours = None
         # Find the mean velocity
         v_avg = np.nanmean(v)
         
@@ -439,7 +445,7 @@ try:
         
         currColor = (np.array(colors[counter][:-1]*255, dtype='int'))
               
-        mask = pointInContour(x,y,Contours)
+#        mask = pointInContour(x,y,Contours)
         
         print(currColor)
         
