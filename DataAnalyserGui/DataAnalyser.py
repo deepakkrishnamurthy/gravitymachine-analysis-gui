@@ -242,7 +242,7 @@ class optionsTrack_Dialog(QtGui.QDialog):
     x_offset = QtCore.pyqtSignal(float)
     y_offset = QtCore.pyqtSignal(float)
 
-    def __init__(self, width_value = 4, length_value = 30, x_offset_value = 0, y_offset_value = 0, PixelPermm=1123, parent = None):
+    def __init__(self, width_value = 4, length_value = 30, x_offset_value = 0, y_offset_value = 0, PixelPermm_value=1123, parent = None):
         super().__init__()
         self.setWindowTitle('Track Parameters')
 
@@ -257,7 +257,7 @@ class optionsTrack_Dialog(QtGui.QDialog):
         self.y_offset_value = y_offset_value
 
         # Pixel size
-        self.PixelPermm_value = PixelPermm    # Pixels per mm
+        self.PixelPermm_value = PixelPermm_value    # Pixels per mm
 
         # Data entry tools (Spinboxes) for Pixel size, chamber extents etc.
         # Pixel size spinbox
@@ -768,8 +768,8 @@ class MainWindow(QtWidgets.QMainWindow):
         options_dialog.exec_()
 
     def options_TrackParams(self):
-        options_dialog_track = optionsTrack_Dialog(width_value = self.central_widget.plot3D.Width, length_value = self.central_widget.plot3D.Length, x_offset_value = self.central_widget.plot3D.x_offset, y_offset_value = self.central_widget.plot3D.y_offset)
-        # options_dialog_track.pixelpermm.connect(self.central_widget.plot3D.update_pixel)
+        options_dialog_track = optionsTrack_Dialog(width_value = self.central_widget.plot3D.Width, length_value = self.central_widget.plot3D.Length, x_offset_value = self.central_widget.plot3D.x_offset, y_offset_value = self.central_widget.plot3D.y_offset, PixelPermm_value = self.central_widget.video_window.PixelPermm)
+        options_dialog_track.pixelpermm.connect(self.central_widget.video_window.update_pixelsize)
         options_dialog_track.width.connect(self.central_widget.plot3D.update_width)
         options_dialog_track.length.connect(self.central_widget.plot3D.update_length)
         options_dialog_track.x_offset.connect(self.central_widget.plot3D.update_x_offset)
