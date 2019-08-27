@@ -480,13 +480,13 @@ class options_Recording(QtGui.QDialog):
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''
         
-class MainWindowMill(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow):
     
    
     def __init__(self):
         super().__init__()
         
-        self.setWindowTitle('Data Analyser')
+        self.setWindowTitle('Gravity Machine Data Analyser')
         self.setWindowIcon(QtGui.QIcon('icon/icon.png'))
         self.statusBar().showMessage('Ready')
         
@@ -564,56 +564,10 @@ class MainWindowMill(QtWidgets.QMainWindow):
                        value = subFolderName
                        self.image_dict[key]=value
 
-#                if(os.path.normpath(dirs) == os.path.normpath(self.directory)):
-#                    for fileNames in files:
-#                        if('.csv' in fileNames):
-#                            trackFileNames.append(fileNames)
 
-#            if(len(trackFileNames)==0):
-#                raise FileNotFoundError('CSV track was not found!')      
-#            elif(len(trackFileNames)>1):
-#                print('More than one .csv file found!')
-#                
-#                for ii, filename in enumerate(trackFileNames):
-##                    
-#                      print('{}: {} \n'.format(ii+1, filename))
-#                    
-#                print('Choose the file to use:')
-#                file_no = int(input())
-#                    
-#                self.trackFile = trackFileNames[file_no-1]
                 print('Loaded {}'.format(self.trackFile))
-                
-#                for tracks in trackFileNames:
-#                    if('division' in tracks):
-#                        self.trackFile = tracks
-#                        break
-#                    elif('mod' in tracks):
-#                        self.trackFile = tracks
-#                        break
-#                    else:
-#                        self.trackFile = 'track.csv'
-#                        break
-#                    print('Loaded {}'.format(self.trackFile))
-#
-#
-#            else:
-#                self.trackFile = trackFileNames[0]
-                
-
-            # Passes the root directory to the Video Window
-            # self.central_widget.video_window.initialize_directory(self.directory)
-            # Proposed change: 
-            # 1. Pass the root directory
-            # 2. Pass a dictionary of the subfolders for each image
-            # 3. Auto-detect which csv file
-
 
             self.central_widget.video_window.initialize_directory(self.directory, self.image_dict)
-
-            
-
-
 
             self.central_widget.video_window.playButton.setEnabled(True)
             self.central_widget.video_window.recordButton.setEnabled(True)
@@ -624,7 +578,6 @@ class MainWindowMill(QtWidgets.QMainWindow):
             self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
 
             self.central_widget.video_window.initialize_parameters()
-
 
             # Need to connect the new Image Names
 
@@ -684,7 +637,6 @@ if __name__ == '__main__':
     
     app = QtGui.QApplication.instance()
     if app is None:
-    
         app = QtGui.QApplication(sys.argv)
     
     #Splash screen (image during the initialisation)
@@ -696,7 +648,7 @@ if __name__ == '__main__':
     
 
     #Mainwindow creation
-    win= MainWindowMill()
+    win= MainWindow()
     qss = QSSHelper.open_qss(os.path.join('aqua', 'aqua.qss'))
     win.setStyleSheet(qss)
     win.central_widget.connect_all()
