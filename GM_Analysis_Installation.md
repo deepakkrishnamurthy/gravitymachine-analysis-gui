@@ -1,32 +1,32 @@
 # Installation instructions for packages for gravity machine data analysis.
 
-# First install Anaconda 
+## First install Anaconda 
 
 https://docs.anaconda.com/anaconda/install/
 Follow all the steps including answering "YES" to "Do you wish the installer to initialize Anaconda3
 by running conda init"
 
-# Open Anaconda prompt (on Windows) or terminal on MacOS or Linux machines
+## Open Anaconda prompt (on Windows) or terminal on MacOS or Linux machines
 
-# Create a new environment for gravity machine projects (if it doesn't exist)
+## Create a new environment for gravity machine projects (if it doesn't exist)
 
-# If an environment exists, activate by using
+### If an environment exists, activate by using
 
 	conda activate envName
 
-# Else create a new environment
+### Else create a new environment
 	conda create --name envName python=3.6 (choose the correct python version so it's compatible with opencv 4.0, in this case this is python 3.6
 	conda activate envName
 
-# Ensure that at this stage you are inside the conda environment. You can check this by seeing a `(envName)Joes-MacBook-Pro:` in your terminal prompt
+## Ensure that at this stage you are inside the conda environment. You can check this by seeing a `(envName)Joes-MacBook-Pro:` in your terminal prompt
 
-# Install pip
+## Install pip
 	conda install pip
 
-# Install numpy
+## Install numpy
 	conda install numpy
 
-# Install OpenCV and Dependencies
+## Install OpenCV and Dependencies
 
 	Instructions adapted from pyimagesearch
 
@@ -34,37 +34,37 @@ by running conda init"
 	pip install opencv-contrib-python
 	
 
-# Check if OpenCv installation worked by opening python in the command prompt
+## Check if OpenCv installation worked by opening python in the command prompt
 	python
 
 	>> import cv2
 
-# If the install works OpenCv should now be imported
+## If the install works OpenCv should now be imported
 
-# Install scipy
+###Install scipy
 	conda install scipy
 
-# Install the Python Imaging Library
+## Install the Python Imaging Library
 	conda install pillow
 
-# Install pyqtgraph
+## Install pyqtgraph
 	conda install pyqtgraph
 
-# Install OpenPIV
+## Install OpenPIV
 
 	conda install -c conda-forge openpiv
 
-# Install Matplotlib
+## Install Matplotlib
 	conda install matplotlib
 
-# Install pandas
+## Install pandas
 	conda install pandas
 
-# Install seaborn
+## Install seaborn
 	conda install seaborn
 
-# Install cmocean 
+## Install cmocean 
 	pip install cmocean
 
-# Install opengl python
+## Install opengl python
 	pip install PyOpenGL
