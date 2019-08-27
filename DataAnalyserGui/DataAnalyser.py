@@ -34,9 +34,16 @@ class CentralWidget(QtWidgets.QWidget):
         super().__init__()
         
         # Channel width
-        self.W = 3
+        self.W = 4
         # Channel length
         self.L = 30
+
+        # Wall offsets (for tracks were homing may not have worked correctly)
+        self.x_offset = 0
+        self.y_offset = 0
+
+        # Pixel size
+        self.PixelPermm = 1123    # Pixels per mm
 
         self.video_saver=VideoSaver()
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
@@ -51,7 +58,7 @@ class CentralWidget(QtWidgets.QWidget):
         #Tool
         self.csv_reader=CSV_Reader(Width = self.W, Length = self.L)
         
-        self.plot3D=plot3D(Width = self.W, Length = self.L)
+        self.plot3D = plot3D(Width = self.W, Length = self.L)
         
         self.panVSlider = QtGui.QSlider(QtCore.Qt.Vertical)
         self.panVSlider.setRange(-400, 400)
@@ -71,6 +78,110 @@ class CentralWidget(QtWidgets.QWidget):
         plot3D_layout.addWidget(self.panHSlider,1,0,1,1)
         plot3D_layout.addWidget(self.home3Dbutton,1,1,1,1)
 
+
+        # Data entry tools (Spinboxes) for Pixel size, chamber extents etc.
+        # Pixel size spinbox
+        self.label_pixel = QtGui.QLabel('Pixel/mm')
+        self.spinbox_pixelpermm=QtGui.QSpinBox()
+        self.spinbox_pixelpermm.setRange(1,3000)
+        self.spinbox_pixelpermm.setSingleStep(1)
+        self.spinbox_pixelpermm.setValue(int(self.PixelPermm))
+        self.spinbox_pixelpermm.valueChanged.connect(self.set_pixelsize)
+
+        self.pixel_layout = QtGui.QVBoxLayout()
+        self.pixel_layout.addWidget(self.label_pixel)
+        self.pixel_layout.addWidget(self.spinbox_pixelpermm)
+
+        self.pixel_group = QtGui.QWidget()
+        self.pixel_group.setLayout(self.pixel_layout)
+
+         # Chamber Width
+        self.label_width = QtGui.QLabel('Chamber width (mm)')
+        self.spinbox_width=QtGui.QDoubleSpinBox()
+        self.spinbox_width.setRange(0,50)
+        self.spinbox_width.setSingleStep(0.1)
+        self.spinbox_width.setDecimals(1)
+        self.spinbox_width.setValue(round(self.W,1))
+        self.spinbox_width.valueChanged.connect(self.set_width)
+
+        self.width_layout = QtGui.QVBoxLayout()
+        self.width_layout.addWidget(self.label_width)
+        self.width_layout.addWidget(self.spinbox_width)
+
+        self.width_group = QtGui.QWidget()
+        self.width_group.setLayout(self.width_layout)
+
+         # Chamber Length
+        self.label_length = QtGui.QLabel('Chamber length (mm)')
+        self.spinbox_length = QtGui.QDoubleSpinBox()
+        self.spinbox_length.setRange(0,50)
+        self.spinbox_length.setSingleStep(0.1)
+        self.spinbox_length.setDecimals(1)
+        self.spinbox_length.setValue(round(self.L,1))
+        self.spinbox_length.valueChanged.connect(self.set_length)
+
+
+        self.length_layout = QtGui.QVBoxLayout()
+        self.length_layout.addWidget(self.label_length)
+        self.length_layout.addWidget(self.spinbox_length)
+
+        self.length_group = QtGui.QWidget()
+        self.length_group.setLayout(self.length_layout)
+
+
+        # X - offset
+        self.label_x_offset = QtGui.QLabel('X-offset (mm)')
+        self.spinbox_x_offset = QtGui.QDoubleSpinBox()
+        self.spinbox_x_offset.setRange(-50,50)
+        self.spinbox_x_offset.setSingleStep(0.1)
+        self.spinbox_x_offset.setDecimals(1)
+        self.spinbox_x_offset.setValue(round(self.x_offset,1))
+        self.spinbox_x_offset.valueChanged.connect(self.set_x_offset)
+
+
+        self.x_offset_layout = QtGui.QVBoxLayout()
+        self.x_offset_layout.addWidget(self.label_x_offset)
+        self.x_offset_layout.addWidget(self.spinbox_x_offset)
+
+        self.x_offset_group = QtGui.QWidget()
+        self.x_offset_group.setLayout(self.x_offset_layout)
+
+
+        # Y - offset
+        self.label_y_offset = QtGui.QLabel('Y-offset (mm)')
+        self.spinbox_y_offset = QtGui.QDoubleSpinBox()
+        self.spinbox_y_offset.setRange(-50,50)
+        self.spinbox_y_offset.setSingleStep(0.1)
+        self.spinbox_y_offset.setDecimals(1)
+        self.spinbox_y_offset.setValue(round(self.y_offset,1))
+        self.spinbox_y_offset.valueChanged.connect(self.set_y_offset)
+
+
+        self.y_offset_layout = QtGui.QVBoxLayout()
+        self.y_offset_layout.addWidget(self.label_y_offset)
+        self.y_offset_layout.addWidget(self.spinbox_y_offset)
+
+        self.y_offset_group = QtGui.QWidget()
+        self.y_offset_group.setLayout(self.y_offset_layout)
+
+
+        h_layout_params = QtGui.QHBoxLayout()
+        h_layout_params.addWidget(self.pixel_group)
+        h_layout_params.addWidget(self.width_group)
+        h_layout_params.addWidget(self.length_group)
+        h_layout_params.addWidget(self.x_offset_group)
+        h_layout_params.addWidget(self.y_offset_group)
+
+        self.groupbox_parameters = QtGui.QGroupBox('Track parameters')
+
+        self.groupbox_parameters.setLayout(h_layout_params)
+
+
+
+
+
+        
+
         # Create a vertical layout consisting of the video window and 3D plot
         v_layout = QtGui.QVBoxLayout()
         # v_layout = QtGui.QGridLayout()
@@ -80,6 +191,7 @@ class CentralWidget(QtWidgets.QWidget):
 
         v_layout.addWidget(self.video_window)
         
+        v_layout.addWidget(self.groupbox_parameters)
 #        v_layout.addLayout(plot3D_layout)
         v_layout.addWidget(self.zplot)
 
@@ -169,9 +281,6 @@ class CentralWidget(QtWidgets.QWidget):
         if self.isImageSaver:
             self.image_saver.register_name(imgName)
         
-    
-        
-        
     def terminate_video(self):
         if self.isImageSaver:
             self.image_saver.wait() #all element in the queue should be processed
@@ -179,7 +288,26 @@ class CentralWidget(QtWidgets.QWidget):
         else:
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
-        
+
+    def set_width(self):
+        self.W = float(self.spinbox_width.value())
+        self.plot3D.update_limits(self.W, self.L)
+
+    def set_length(self):
+        self.L = float(self.spinbox_length.value())
+        self.plot3D.update_limits(self.W, self.L)
+
+    def set_pixelsize(self):
+        self.PixelPermm = float(self.spinbox_pixelpermm.value())
+
+    def set_x_offset(self):
+        self.x_offset = float(self.spinbox_x_offset.value())
+        self.plot3D.update_offsets(self.x_offset, self.y_offset)
+    
+    def set_y_offset(self):
+        self.y_offset = float(self.spinbox_y_offset.value())
+        self.plot3D.update_offsets(self.x_offset, self.y_offset)
+
     def connect_all(self):
         
         self.csv_reader.Time_data.connect(self.xplot.update_Time)
@@ -218,6 +346,27 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.record_signal.connect(self.record_change)
         self.video_window.image_to_record.connect(self.add_frame)
         self.video_window.imageName.connect(self.add_name)
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#                   Window for Track parameters
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+class optionsTrack_Dialog(QtGui.QDialog):
+    width=QtCore.pyqtSignal(float)
+    length=QtCore.pyqtSignal(float)
+    x_offset=QtCore.pyqtSignal(float)
+    y_offset=QtCore.pyqtSignal(float)
+
+    def __init__(self, parent = None)
+    super().__init__()
+    self.setWindowTitle('Track Parameters')
+    
+
+
+
 '''
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #                   Modal window for 3D plot parameters
@@ -606,7 +755,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         
         reply = QtWidgets.QMessageBox.question(self, 'Message',
-            "Are you sure to quit?", QtWidgets.QMessageBox.Yes | 
+            "Are you sure you want to quit?", QtWidgets.QMessageBox.Yes | 
             QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes)
 
         if reply == QtWidgets.QMessageBox.Yes:

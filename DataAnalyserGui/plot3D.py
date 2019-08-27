@@ -29,7 +29,13 @@ class plot3D(gl.GLViewWidget):
         super().__init__(parent)
         
         self.Width = Width
+        self.prevWidth = self.Width
         self.Length = Length
+        self.prevLength = self.Length
+        self.x_offset = 0
+        self.x_offset_prev = self.x_offset
+        self.y_offset = 0
+        self.y_offset_prev = self.y_offset
 
         self.size_traj=0.12
         self.size_grid = 1
@@ -91,6 +97,21 @@ class plot3D(gl.GLViewWidget):
         self.Zmax=self.Z.max()
         self.Zmin=self.Z.min()
         self.update_plot()
+
+    def update_limits(self, Width, Length):
+        self.prevWidth = self.Width
+        self.Width = Width
+        self.prevLength = self.Length
+        self.Length = Length
+        # self.initialize_grid()
+        self.update_grid_extents()
+
+    def update_offsets(self, x_offset, y_offset):
+        self.x_offset_prev = self.x_offset
+        self.x_offset = x_offset
+        self.y_offset_prev = self.y_offset
+        self.y_offset = y_offset
+        self.update_grid_extents()
         
     def update_plot(self):
         n=len(self.X)
@@ -107,11 +128,27 @@ class plot3D(gl.GLViewWidget):
         self.update_grid() #build a grid adapted to the size of the data
         self.set_initial_center() #set the point to which the camera is looking at
         self.reset_view()
+
+    def update_grid_extents(self):
+        newZsize=np.ceil(self.Z.max()-self.Z.min())
+
+        self.xygrid.setSize(self.Length,self.Width)
+        self.xygrid.translate((self.x_offset - self.x_offset_prev) , 0.5*(self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
+
+
+        self.yzgrid.setSize(newZsize,self.Width,0)
+        self.yzgrid.translate(0.5*(self.Length - self.prevLength) + (self.x_offset - self.x_offset_prev), 0.5*(self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
+
+
+        self.xzgrid.setSize(self.Length,newZsize,0)
+        self.xzgrid.translate((self.x_offset - self.x_offset_prev), (self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
+
         
     def update_grid(self):
         newZsize=np.ceil(self.Z.max()-self.Z.min())
         
         self.xygrid.translate(0, 0, self.Z.min())
+
         
         self.yzgrid.setSize(newZsize,self.Width,0)
         self.yzgrid.translate(0, 0, 0.5*(newZsize-10)+self.Z.min())
@@ -169,6 +206,9 @@ class plot3D(gl.GLViewWidget):
     #------------------------------------------------------------
 
     def initialize_grid(self):
+
+        self.xygrid_pos = self.Width/2
+
         self.xygrid = Gd.GLGridItem(color=self.grid_color,thickness=self.size_grid)
         self.xygrid.setSize(self.Length,self.Width)
         self.xygrid.setSpacing(1,1,0)
