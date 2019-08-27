@@ -25,7 +25,7 @@ class plot3D(gl.GLViewWidget):
     
     reset_sliders=QtCore.pyqtSignal(int)
     
-    def __init__(self, parent=None, Width=3, Length = 30):
+    def __init__(self, parent=None, Width=4, Length = 30):
         super().__init__(parent)
         
         self.Width = Width
@@ -98,18 +98,33 @@ class plot3D(gl.GLViewWidget):
         self.Zmin=self.Z.min()
         self.update_plot()
 
-    def update_limits(self, Width, Length):
-        self.prevWidth = self.Width
-        self.Width = Width
+    def update_extent_values(self):
         self.prevLength = self.Length
-        self.Length = Length
-        # self.initialize_grid()
+        self.x_offset_prev = self.x_offset
+        self.y_offset_prev = self.y_offset
+        self.prevWidth = self.Width
+
+
+    def update_width(self, Width):
+
+        self.update_extent_values()
+        self.Width = Width
         self.update_grid_extents()
 
-    def update_offsets(self, x_offset, y_offset):
-        self.x_offset_prev = self.x_offset
+    def update_length(self, Length):
+
+        self.update_extent_values()
+        self.Length = Length
+        self.update_grid_extents()
+
+    def update_x_offset(self, x_offset):
+
+        self.update_extent_values()
         self.x_offset = x_offset
-        self.y_offset_prev = self.y_offset
+        self.update_grid_extents()
+
+    def update_y_offset(self, y_offset):
+        self.update_extent_values()
         self.y_offset = y_offset
         self.update_grid_extents()
         
@@ -135,10 +150,8 @@ class plot3D(gl.GLViewWidget):
         self.xygrid.setSize(self.Length,self.Width)
         self.xygrid.translate((self.x_offset - self.x_offset_prev) , 0.5*(self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
 
-
         self.yzgrid.setSize(newZsize,self.Width,0)
         self.yzgrid.translate(0.5*(self.Length - self.prevLength) + (self.x_offset - self.x_offset_prev), 0.5*(self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
-
 
         self.xzgrid.setSize(self.Length,newZsize,0)
         self.xzgrid.translate((self.x_offset - self.x_offset_prev), (self.Width - self.prevWidth) + (self.y_offset - self.y_offset_prev), 0)
