@@ -110,7 +110,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.isRecording=False
         
         # If true then plays the data in real-time
-        self.real_time = True
+        self.real_time = False
         # No:of frames to advance for recording purposes
         self.frames = 3
         #Gui Component
@@ -309,55 +309,21 @@ class VideoWindow(QtWidgets.QWidget):
         self.record_signal.emit(self.isRecording)
         print('start-recording-signal')
     
-#    def play_refresh(self):
-#        
-#        if(self.real_time == True):
-#            timediff = time.time()-self.current_computer_time
-#            
-#            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-#            if index>self.positionSlider_prevValue:
-#                self.current_computer_time+=timediff
-#                self.current_track_time+=timediff
-#                self.positionSlider.setValue(index)
-#                
-#        else:
-#            
-#            self.current_track_index = self.prev_track_index + self.frames
-#        
-#            self.positionSlider.setValue(self.current_track_index)
-#            
-#            self.prev_track_index = self.current_track_index
-#            
-#            
-#            
-#            index = self.prevIndex + 1
-#            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-#            if index>self.positionSlider_prevValue:
-#                self.current_computer_time+=timediff
-#                self.current_track_time+=timediff
-#                self.positionSlider.setValue(index)
-            
-    # Implementing a new play function where images are played sequentially and not according to a time difference.        
     def play_refresh(self):
-#        timediff=time.time()-self.current_computer_time
         
-        
-        self.current_track_index = self.prev_track_index + self.frames
-        
-        self.positionSlider.setValue(self.current_track_index)
-        
-        self.prev_track_index = self.current_track_index
-        
-        
-        
-        index = self.prevIndex + 1
-        index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
-        if index>self.positionSlider_prevValue:
-            self.current_computer_time+=timediff
-            self.current_track_time+=timediff
-            self.positionSlider.setValue(index)
+        if self.real_time:
+            timediff = time.time()-self.current_computer_time
             
+            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
+            if index>self.positionSlider_prevValue:
+                self.current_computer_time+=timediff
+                self.current_track_time+=timediff
+                self.positionSlider.setValue(index)
+                
+        else:
             
+            self.current_track_index = self.prev_track_index + self.frames
+        
+            self.positionSlider.setValue(self.current_track_index)
             
-
-            
+            self.prev_track_index = self.current_track_index
