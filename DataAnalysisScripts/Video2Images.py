@@ -24,15 +24,16 @@ import os
 
 #VideoFolder = '/Users/deepak/Dropbox/MiscData'
 
-VideoFolder = '/Volumes/GRAVMACH1/GravityMachine/SedimentingGlassBeads_2017'
+#VideoFolder = '/Volumes/GRAVMACH1/GravityMachine/SedimentingGlassBeads_2017'
 
+VideoFolder = '/Volumes/My Book/2019 Monterey Trip/Tunicates/LarvaeReleaseImaging/2019_08_10'
 
 
 #VideoFile = 'MVI_1916.MOV'
 #VideoFile = 'InfiniteBeadDance.MOV'
 #VideoFile = 'StablePair_Trimmed.MOV'
 
-VideoFile = 'StableParticlePairsMVI_1902.MOV'
+VideoFile = 'Video0003.mkv'
 
 VideoSaveFolder = os.path.join(VideoFolder,'images')
 
