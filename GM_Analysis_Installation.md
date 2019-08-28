@@ -38,9 +38,9 @@ by running conda init"
 
 	>> import cv2
 
-## If the install works OpenCv should now be imported
+### If the install works OpenCv should now be imported
 
-###Install scipy
+## Install scipy
 	conda install scipy
 
 ## Install the Python Imaging Library
