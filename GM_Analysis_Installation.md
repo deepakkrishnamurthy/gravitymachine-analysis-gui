@@ -15,7 +15,8 @@ by running conda init"
 	conda activate envName
 
 ### Else create a new environment
-	conda create --name envName python=3.6 (choose the correct python version so it's compatible with opencv 4.0, in this case this is python 3.6
+#### (choose the correct python version so it's compatible with opencv 4.0, in this case this is python 3.6)
+	conda create --name envName python=3.6 
 	conda activate envName
 
 ## Ensure that at this stage you are inside the conda environment. You can check this by seeing a `(envName)Joes-MacBook-Pro:` in your terminal prompt
@@ -26,9 +27,7 @@ by running conda init"
 ## Install numpy
 	conda install numpy
 
-## Install OpenCV and Dependencies
-
-	Instructions adapted from pyimagesearch
+## Install OpenCV and OpenCV-contrib
 
 	pip install opencv-python
 	pip install opencv-contrib-python
@@ -55,6 +54,7 @@ by running conda init"
 	conda install -c conda-forge openpiv
 
 ## Install Matplotlib
+
 	conda install matplotlib
 
 ## Install pandas
@@ -67,4 +67,5 @@ by running conda init"
 	pip install cmocean
 
 ## Install opengl python
+
 	pip install PyOpenGL
