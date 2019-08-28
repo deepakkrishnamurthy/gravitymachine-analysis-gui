@@ -35,6 +35,7 @@ class ImageWidget(pg.GraphicsLayoutWidget):
         ## Create image item
         self.img=pg.ImageItem(border='w')
         self.view.addItem(self.img)
+
         
 #    def refresh_image(self, image_bgr): 
 #
@@ -84,7 +85,7 @@ class VideoWindow(QtWidgets.QWidget):
     record_signal=QtCore.pyqtSignal(bool)
     image_to_record=QtCore.pyqtSignal(np.ndarray, str)
     
-    def __init__(self, parent=None):
+    def __init__(self, PixelPermm = 1123, parent=None):
         super(VideoWindow, self).__init__(parent)
 
         #Video parameters
@@ -97,6 +98,14 @@ class VideoWindow(QtWidgets.QWidget):
         self.LED_intensity = []
         self.imW = 0
         self.imH = 0
+        self.PixelPermm = PixelPermm
+        self.scalebarSize = 100
+        self.baseFontScale = 1
+        self.timeStampPos_base = (20, 30)
+        self.scaleBar_textOffset_base = (220,25)
+
+        self.newData = True
+
         
         self.timer=QtCore.QTimer()
         self.timer.setInterval(0) #in ms
@@ -166,15 +175,17 @@ class VideoWindow(QtWidgets.QWidget):
 
         image = cv2.imread(file_directory)
 
-        if(self.imW==0 or self.imH ==0):
+        print(self.newData)
+        if(self.imW==0 or self.imH ==0 or self.newData==True):
             self.imH, self.imW,*rest = np.shape(image)
             print(np.shape(image))
             print(self.imH, self.imW)
+            self.newData = False
         
         if(len(self.Image_Time) is not 0):
             currTime = self.Image_Time[self.current_track_index]
             # print('Current Image Time: {}'.format(currTime))
-            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', (20, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
 
             # if(LED_intensity>0):
             #     cv2.putText(image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
@@ -185,7 +196,16 @@ class VideoWindow(QtWidgets.QWidget):
 
 
 
-            cv2.line(image, (self.imW-int((250/1000)*(314/(self.imW/720)))-20,self.imH-20),(self.imW-20,self.imH-20),color =(255,255,255),thickness = 3,lineType = cv2.LINE_AA)
+            x_start = self.imW - int((self.scalebarSize/1000)*(self.PixelPermm))-self.scaleBar_offset()
+            y_start = self.imH - self.scaleBar_offset()
+            x_end = self.imW - self.scaleBar_offset()
+            y_end = y_start
+
+            scaleBar_text_offset = self.scaleBar_text_offset()
+
+            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+
+            cv2.line(image, (x_start, y_start), (x_end, y_end), color =(255,255,255),thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
 
         self.image_widget.refresh_image(image)
         self.imageName.emit(image_name)
@@ -224,6 +244,10 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSpinBox.setEnabled(True)
         
     def initialize_parameters(self):
+        # Flag set to true when a new dataset is opened
+        self.newData = True
+        print('In initialize parameters')
+        print(self.newData)
         if self.playButton.isChecked():
             self.playButton.setChecked(False)
             self.timer.stop()
@@ -236,6 +260,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSlider.setValue(0)
         self.positionSpinBox_prevValue=0
         self.positionSlider_prevValue=0
+        
         
     def positionSpinBox_setValue(self,value):
         newvalue=self.Image_Time[value]
@@ -288,7 +313,20 @@ class VideoWindow(QtWidgets.QWidget):
             
         return index,hasToChange
                 
+    def update_pixelsize(self, PixelPermm):
+        self.PixelPermm = PixelPermm
 
+    def scaleBar_offset(self):
+        return int(20*self.imW/720)
+
+    def fontScale(self):
+        return max(int(0.75*self.baseFontScale*self.imW/720),1) 
+
+    def timeStampPosition(self):
+        return (int((self.imW/720)*self.timeStampPos_base[0]), int((self.imW/720)*self.timeStampPos_base[1]))
+
+    def scaleBar_text_offset(self):
+        return (int(max((self.imW/1920),0.5)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
             
     def play(self):
         if self.playButton.isChecked():

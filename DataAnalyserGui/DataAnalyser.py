@@ -33,10 +33,7 @@ class CentralWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         
-        # Channel width
-        self.W = 3
-        # Channel length
-        self.L = 30
+        
 
         self.video_saver=VideoSaver()
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
@@ -49,9 +46,9 @@ class CentralWidget(QtWidgets.QWidget):
         self.zplot=PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
         
         #Tool
-        self.csv_reader=CSV_Reader(Width = self.W, Length = self.L)
+        self.csv_reader=CSV_Reader()
         
-        self.plot3D=plot3D(Width = self.W, Length = self.L)
+        self.plot3D = plot3D()
         
         self.panVSlider = QtGui.QSlider(QtCore.Qt.Vertical)
         self.panVSlider.setRange(-400, 400)
@@ -71,6 +68,19 @@ class CentralWidget(QtWidgets.QWidget):
         plot3D_layout.addWidget(self.panHSlider,1,0,1,1)
         plot3D_layout.addWidget(self.home3Dbutton,1,1,1,1)
 
+
+        
+
+        # self.groupbox_parameters = QtGui.QGroupBox('Track parameters')
+
+        # self.groupbox_parameters.setLayout(h_layout_params)
+
+
+
+
+
+        
+
         # Create a vertical layout consisting of the video window and 3D plot
         v_layout = QtGui.QVBoxLayout()
         # v_layout = QtGui.QGridLayout()
@@ -80,6 +90,7 @@ class CentralWidget(QtWidgets.QWidget):
 
         v_layout.addWidget(self.video_window)
         
+        # v_layout.addWidget(self.groupbox_parameters)
 #        v_layout.addLayout(plot3D_layout)
         v_layout.addWidget(self.zplot)
 
@@ -169,9 +180,6 @@ class CentralWidget(QtWidgets.QWidget):
         if self.isImageSaver:
             self.image_saver.register_name(imgName)
         
-    
-        
-        
     def terminate_video(self):
         if self.isImageSaver:
             self.image_saver.wait() #all element in the queue should be processed
@@ -179,7 +187,7 @@ class CentralWidget(QtWidgets.QWidget):
         else:
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
-        
+
     def connect_all(self):
         
         self.csv_reader.Time_data.connect(self.xplot.update_Time)
@@ -218,6 +226,158 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.record_signal.connect(self.record_change)
         self.video_window.image_to_record.connect(self.add_frame)
         self.video_window.imageName.connect(self.add_name)
+
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#                   Window for Track parameters
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+class optionsTrack_Dialog(QtGui.QDialog):
+
+    width = QtCore.pyqtSignal(float)
+    length = QtCore.pyqtSignal(float)
+    pixelpermm = QtCore.pyqtSignal(int)
+    x_offset = QtCore.pyqtSignal(float)
+    y_offset = QtCore.pyqtSignal(float)
+
+    def __init__(self, width_value = 4, length_value = 30, x_offset_value = 0, y_offset_value = 0, PixelPermm_value=1123, parent = None):
+        super().__init__()
+        self.setWindowTitle('Track Parameters')
+
+        # Default options for the track parameters
+        # Channel width
+        self.width_value = width_value
+        # Channel length
+        self.length_value = length_value
+
+        # Wall offsets (for tracks were homing may not have worked correctly)
+        self.x_offset_value = x_offset_value
+        self.y_offset_value = y_offset_value
+
+        # Pixel size
+        self.PixelPermm_value = PixelPermm_value    # Pixels per mm
+
+        # Data entry tools (Spinboxes) for Pixel size, chamber extents etc.
+        # Pixel size spinbox
+        self.label_pixel = QtGui.QLabel('Pixel/mm')
+        self.spinbox_pixelpermm=QtGui.QSpinBox()
+        self.spinbox_pixelpermm.setRange(1,3000)
+        self.spinbox_pixelpermm.setSingleStep(1)
+        self.spinbox_pixelpermm.setValue(int(self.PixelPermm_value))
+        self.spinbox_pixelpermm.valueChanged.connect(self.send_pixelsize)
+
+        self.pixel_layout = QtGui.QHBoxLayout()
+        self.pixel_layout.addWidget(self.label_pixel)
+        self.pixel_layout.addWidget(self.spinbox_pixelpermm)
+
+        self.pixel_group = QtGui.QWidget()
+        self.pixel_group.setLayout(self.pixel_layout)
+
+         # Chamber Width
+        self.label_width = QtGui.QLabel('Chamber width (mm)')
+        self.spinbox_width=QtGui.QDoubleSpinBox()
+        self.spinbox_width.setRange(0,50)
+        self.spinbox_width.setSingleStep(0.1)
+        self.spinbox_width.setDecimals(1)
+        self.spinbox_width.setValue(round(self.width_value,1))
+        self.spinbox_width.valueChanged.connect(self.send_width)
+
+        self.width_layout = QtGui.QHBoxLayout()
+        self.width_layout.addWidget(self.label_width)
+        self.width_layout.addWidget(self.spinbox_width)
+
+        self.width_group = QtGui.QWidget()
+        self.width_group.setLayout(self.width_layout)
+
+         # Chamber Length
+        self.label_length = QtGui.QLabel('Chamber length (mm)')
+        self.spinbox_length = QtGui.QDoubleSpinBox()
+        self.spinbox_length.setRange(0,50)
+        self.spinbox_length.setSingleStep(0.1)
+        self.spinbox_length.setDecimals(1)
+        self.spinbox_length.setValue(round(self.length_value,1))
+        self.spinbox_length.valueChanged.connect(self.send_length)
+
+
+        self.length_layout = QtGui.QHBoxLayout()
+        self.length_layout.addWidget(self.label_length)
+        self.length_layout.addWidget(self.spinbox_length)
+
+        self.length_group = QtGui.QWidget()
+        self.length_group.setLayout(self.length_layout)
+
+
+        # X - offset
+        self.label_x_offset = QtGui.QLabel('X-offset (mm)')
+        self.spinbox_x_offset = QtGui.QDoubleSpinBox()
+        self.spinbox_x_offset.setRange(-50,50)
+        self.spinbox_x_offset.setSingleStep(0.1)
+        self.spinbox_x_offset.setDecimals(1)
+        self.spinbox_x_offset.setValue(round(self.x_offset_value,1))
+        self.spinbox_x_offset.valueChanged.connect(self.send_x_offset)
+
+
+        self.x_offset_layout = QtGui.QHBoxLayout()
+        self.x_offset_layout.addWidget(self.label_x_offset)
+        self.x_offset_layout.addWidget(self.spinbox_x_offset)
+
+        self.x_offset_group = QtGui.QWidget()
+        self.x_offset_group.setLayout(self.x_offset_layout)
+
+
+        # Y - offset
+        self.label_y_offset = QtGui.QLabel('Y-offset (mm)')
+        self.spinbox_y_offset = QtGui.QDoubleSpinBox()
+        self.spinbox_y_offset.setRange(-50,50)
+        self.spinbox_y_offset.setSingleStep(0.1)
+        self.spinbox_y_offset.setDecimals(1)
+        self.spinbox_y_offset.setValue(round(self.y_offset_value,1))
+        self.spinbox_y_offset.valueChanged.connect(self.send_y_offset)
+
+
+        self.y_offset_layout = QtGui.QHBoxLayout()
+        self.y_offset_layout.addWidget(self.label_y_offset)
+        self.y_offset_layout.addWidget(self.spinbox_y_offset)
+
+        self.y_offset_group = QtGui.QWidget()
+        self.y_offset_group.setLayout(self.y_offset_layout)
+
+
+        h_layout_params = QtGui.QVBoxLayout()
+        h_layout_params.addWidget(self.pixel_group)
+        h_layout_params.addWidget(self.width_group)
+        h_layout_params.addWidget(self.length_group)
+        h_layout_params.addWidget(self.x_offset_group)
+        h_layout_params.addWidget(self.y_offset_group)
+
+        self.setLayout(h_layout_params)
+        
+        self.setStyleSheet(qss)
+
+    def send_width(self):
+        self.width_value = round(self.spinbox_width.value(),1)
+        self.width.emit(self.width_value)
+
+    def send_length(self):
+        self.length_value = round(self.spinbox_length.value(),1)
+        self.length.emit(self.length_value)
+    
+    def send_pixelsize(self):
+        self.PixelPermm_value = int(self.spinbox_pixelpermm.value())
+        self.pixelpermm.emit(self.PixelPermm_value)
+
+    def send_x_offset(self):
+        self.x_offset_value = round(self.spinbox_x_offset.value(),1)
+        self.x_offset.emit(self.x_offset_value)
+    
+    def send_y_offset(self):
+        self.y_offset_value = round(self.spinbox_y_offset.value(),1)
+        self.y_offset.emit(self.y_offset_value)
+
+
+
 '''
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #                   Modal window for 3D plot parameters
@@ -490,6 +650,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowIcon(QtGui.QIcon('icon/icon.png'))
         self.statusBar().showMessage('Ready')
         
+
         
         
         #WIDGETS
@@ -509,6 +670,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Create menu bar and add action
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('&File')
+        editmenu = menuBar.addMenu('&Edit')
         
         # Create new action
         openAction = QtGui.QAction(QtGui.QIcon('open.png'), '&Open', self)        
@@ -527,14 +689,22 @@ class MainWindow(QtWidgets.QMainWindow):
         option3DplotAction.triggered.connect(self.options_3Dplot)
         
         optionTimeInterval = QtGui.QAction(QtGui.QIcon('open.png'), '&Select a Time Interval', self)        
-        optionTimeInterval.setShortcut('Ctrl+T')
+        optionTimeInterval.setShortcut('Ctrl+I')
         optionTimeInterval.setStatusTip('Time Interval')
         optionTimeInterval.triggered.connect(self.options_TimeInt)
+
+        optionTrack = QtGui.QAction(QtGui.QIcon('open.png'), '&Select Track Parameters', self)        
+        optionTrack.setShortcut('Ctrl+T')
+        optionTrack.setStatusTip('Track Parameters')
+        optionTrack.triggered.connect(self.options_TrackParams)
         
         fileMenu.addAction(openAction)
         fileMenu.addAction(save3DplotAction)
-        fileMenu.addAction(option3DplotAction)
-        fileMenu.addAction(optionTimeInterval)
+        # fileMenu.addAction(option3DplotAction)
+        # fileMenu.addAction(optionTimeInterval)
+        editmenu.addAction(optionTrack)
+        editmenu.addAction(option3DplotAction)
+        editmenu.addAction(optionTimeInterval)
         
         self.central_widget.video_window.imageName.connect(self.update_statusBar)
         self.central_widget.csv_reader.Time_data.connect(self.initialize_image_time)
@@ -547,7 +717,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
         
-        self.trakFile, *rest = os.path.split(self.trackFile)
+        # self.trackFile, *rest = os.path.split(self.trackFile)
         
         if os.path.exists(self.directory):
 
@@ -576,13 +746,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
             self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
-
             self.central_widget.video_window.initialize_parameters()
 
             # Need to connect the new Image Names
 
-            # self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
-            # self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
+            self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
+            self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
 
         
     def save_3Dplot(self):
@@ -596,6 +765,19 @@ class MainWindow(QtWidgets.QMainWindow):
         options_dialog.background.connect(self.central_widget.plot3D.update_background)
         
         options_dialog.exec_()
+
+    def options_TrackParams(self):
+        options_dialog_track = optionsTrack_Dialog(width_value = self.central_widget.plot3D.Width, length_value = self.central_widget.plot3D.Length, x_offset_value = self.central_widget.plot3D.x_offset, y_offset_value = self.central_widget.plot3D.y_offset, PixelPermm_value = self.central_widget.video_window.PixelPermm)
+        options_dialog_track.pixelpermm.connect(self.central_widget.video_window.update_pixelsize)
+        options_dialog_track.width.connect(self.central_widget.plot3D.update_width)
+        options_dialog_track.length.connect(self.central_widget.plot3D.update_length)
+        options_dialog_track.x_offset.connect(self.central_widget.plot3D.update_x_offset)
+        options_dialog_track.y_offset.connect(self.central_widget.plot3D.update_y_offset)
+        options_dialog_track.exec_()
+
+
+
+
         
     def options_TimeInt(self):
         print(self.image_time)
@@ -606,7 +788,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def closeEvent(self, event):
         
         reply = QtWidgets.QMessageBox.question(self, 'Message',
-            "Are you sure to quit?", QtWidgets.QMessageBox.Yes | 
+            "Are you sure you want to quit?", QtWidgets.QMessageBox.Yes | 
             QtWidgets.QMessageBox.No, QtWidgets.QMessageBox.Yes)
 
         if reply == QtWidgets.QMessageBox.Yes:
