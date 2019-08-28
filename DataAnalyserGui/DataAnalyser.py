@@ -717,7 +717,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
         
-        self.trakFile, *rest = os.path.split(self.trackFile)
+        # self.trackFile, *rest = os.path.split(self.trackFile)
         
         if os.path.exists(self.directory):
 
@@ -746,13 +746,12 @@ class MainWindow(QtWidgets.QMainWindow):
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
             self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
-
             self.central_widget.video_window.initialize_parameters()
 
             # Need to connect the new Image Names
 
-            # self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
-            # self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
+            self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
+            self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
 
         
     def save_3Dplot(self):

@@ -102,7 +102,9 @@ class VideoWindow(QtWidgets.QWidget):
         self.scalebarSize = 100
         self.baseFontScale = 1
         self.timeStampPos_base = (20, 30)
-        self.scaleBar_textOffset_base = (180,25)
+        self.scaleBar_textOffset_base = (220,25)
+
+        self.newData = True
 
         
         self.timer=QtCore.QTimer()
@@ -173,10 +175,12 @@ class VideoWindow(QtWidgets.QWidget):
 
         image = cv2.imread(file_directory)
 
-        if(self.imW==0 or self.imH ==0):
+        print(self.newData)
+        if(self.imW==0 or self.imH ==0 or self.newData==True):
             self.imH, self.imW,*rest = np.shape(image)
             print(np.shape(image))
             print(self.imH, self.imW)
+            self.newData = False
         
         if(len(self.Image_Time) is not 0):
             currTime = self.Image_Time[self.current_track_index]
@@ -240,6 +244,10 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSpinBox.setEnabled(True)
         
     def initialize_parameters(self):
+        # Flag set to true when a new dataset is opened
+        self.newData = True
+        print('In initialize parameters')
+        print(self.newData)
         if self.playButton.isChecked():
             self.playButton.setChecked(False)
             self.timer.stop()
@@ -252,6 +260,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSlider.setValue(0)
         self.positionSpinBox_prevValue=0
         self.positionSlider_prevValue=0
+        
         
     def positionSpinBox_setValue(self,value):
         newvalue=self.Image_Time[value]
@@ -311,13 +320,13 @@ class VideoWindow(QtWidgets.QWidget):
         return int(20*self.imW/720)
 
     def fontScale(self):
-        return int(0.75*self.baseFontScale*self.imW/720) 
+        return max(int(0.75*self.baseFontScale*self.imW/720),1) 
 
     def timeStampPosition(self):
         return (int((self.imW/720)*self.timeStampPos_base[0]), int((self.imW/720)*self.timeStampPos_base[1]))
 
     def scaleBar_text_offset(self):
-        return (int((self.imW/1920)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
+        return (int(max((self.imW/1920),0.5)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
             
     def play(self):
         if self.playButton.isChecked():
