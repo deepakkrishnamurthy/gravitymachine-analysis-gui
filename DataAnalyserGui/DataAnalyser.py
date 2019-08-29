@@ -393,9 +393,9 @@ class optionsVideo_dialog(QtGui.QDialog):
 
         self.label_speed = QtGui.QLabel('Playback speed')
         self.hslider_speed = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.hslider_speed.setRange(0,100)
+        self.hslider_speed.setRange(0,50)
         self.spinbox_speed=QtGui.QDoubleSpinBox()
-        self.spinbox_speed.setRange(0,10)
+        self.spinbox_speed.setRange(0,5)
         self.spinbox_speed.setSingleStep(0.1)
         self.spinbox_speed.setValue(self.playback_speed_value)
         self.hslider_speed.valueChanged.connect(self.spinbox_speed_setValue)

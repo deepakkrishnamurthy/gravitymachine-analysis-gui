@@ -136,7 +136,7 @@ class VideoWindow(QtWidgets.QWidget):
         # No:of frames to advance for recording purposes
         self.frames = 3
         # This gives playback_speed x normal speed
-        self.playback_speed = 5
+        self.playback_speed = 1
         #Gui Component
         
         self.image_widget=ImageWidget()
