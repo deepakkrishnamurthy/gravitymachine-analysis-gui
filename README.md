@@ -1,5 +1,4 @@
-# Gravity Machine Analysis GUI
-
+# Gravity Machine Analysis GUI 
 <img src="https://github.com/deepakkrishnamurthy/GravityMachineAnalysis_GUI/blob/master/DataAnalyserGui/icon/icon_2.png" alt="GM"
 	title="GM" width="150" height="100" />
 
