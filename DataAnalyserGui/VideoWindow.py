@@ -343,7 +343,6 @@ class VideoWindow(QtWidgets.QWidget):
            
     def update_playback_speed(self, newvalue):
         self.playback_speed = newvalue
-        print(self.playback_speed)
 
     def play(self):
         if self.playButton.isChecked():
