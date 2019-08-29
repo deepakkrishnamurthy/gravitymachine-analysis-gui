@@ -25,7 +25,6 @@ To change the playback speed of the video, navigate to *Video > Video Parameters
 
 Krishnamurthy, Deepak, Hongquan Li, François Benoit du Rey, Pierre Cambournac, Adam Larson, and Manu Prakash. "Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography." bioRxiv (2019): 610246.
 
-## Screenshot
 
 
 #### Contributors: 
