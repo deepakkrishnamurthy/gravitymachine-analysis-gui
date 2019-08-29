@@ -15,10 +15,10 @@ To launch open a terminal, activate the appropriate virtual environment (conda a
 To open a new dataset, hit *'Ctrl + O'* or click *File > Open*. Then first choose the folder containing the data (.csv track file + folder containing images). In the next dialog, choose the .csv track file you wish to open.
 
 ### Changing track parameters
-To change track parameters such as Pixel size, chamber dimensions etc., navigate to Edit > Track parameters or hit *'Ctrl + T'*. 
+To change track parameters such as Pixel size, chamber dimensions etc., navigate to *Edit > Track* parameters or hit *'Ctrl + T'*. 
 
 ### Changing Video Playback speed
-To change the playback speed of the video, navigate to Video > Video Parameters or hit *'Ctrl + V'*. Use the slider or entry box to enter the playback factor. Playback factor of *'1'* corresponds to real-time playback.
+To change the playback speed of the video, navigate to *Video > Video Parameters* or hit *'Ctrl + V'*. Use the slider or entry box to enter the playback factor. Playback factor of *'1'* corresponds to real-time playback.
 
 
 ## To cite this tool:
