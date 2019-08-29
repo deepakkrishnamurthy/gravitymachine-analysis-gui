@@ -36,6 +36,12 @@ class ImageWidget(pg.GraphicsLayoutWidget):
         self.img=pg.ImageItem(border='w')
         self.view.addItem(self.img)
 
+        # Contrast factor for image
+        self.clahe_cliplimit = 3
+
+        # Create a CLAHE object 
+        self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
+
         
 #    def refresh_image(self, image_bgr): 
 #
@@ -54,21 +60,26 @@ class ImageWidget(pg.GraphicsLayoutWidget):
 
         image_bgr=cv2.rotate(image_bgr,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
         
+        # Convert from BGR to LAB colorspace
         image_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
         
+        # Split the LAB image into individual channels
         L,A,B = cv2.split(image_lab)
         
-
-        clahe = cv2.createCLAHE(clipLimit=3.5, tileGridSize=(6,6))
-        
-        CL = clahe.apply(L)
+        # Apply CLAHE contrast enhancement 
+        CL = self.clahe.apply(L)
         
         image_lab = cv2.merge((CL,A,B))
         
         image_rgb = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
                 
-    
         self.img.setImage(image_rgb)
+
+    def update_clahe(self):
+        # Update clahe parameters
+        self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
+
+
         
         
 '''
@@ -99,6 +110,8 @@ class VideoWindow(QtWidgets.QWidget):
         self.imW = 0
         self.imH = 0
         self.PixelPermm = PixelPermm
+
+        # Font and Font position parameters for annotating images
         self.scalebarSize = 100
         self.baseFontScale = 1
         self.timeStampPos_base = (20, 30)
@@ -119,9 +132,11 @@ class VideoWindow(QtWidgets.QWidget):
         self.isRecording=False
         
         # If true then plays the data in real-time
-        self.real_time = False
+        self.real_time = True
         # No:of frames to advance for recording purposes
         self.frames = 3
+        # This gives playback_speed x normal speed
+        self.playback_speed = 1
         #Gui Component
         
         self.image_widget=ImageWidget()
@@ -174,8 +189,6 @@ class VideoWindow(QtWidgets.QWidget):
         # print(file_directory)
 
         image = cv2.imread(file_directory)
-
-        print(self.newData)
         if(self.imW==0 or self.imH ==0 or self.newData==True):
             self.imH, self.imW,*rest = np.shape(image)
             print(np.shape(image))
@@ -327,7 +340,10 @@ class VideoWindow(QtWidgets.QWidget):
 
     def scaleBar_text_offset(self):
         return (int(max((self.imW/1920),0.5)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
-            
+           
+    def update_playback_speed(self, newvalue):
+        self.playback_speed = newvalue
+
     def play(self):
         if self.playButton.isChecked():
             self.current_computer_time = time.time()
@@ -351,11 +367,14 @@ class VideoWindow(QtWidgets.QWidget):
         
         if self.real_time:
             timediff = time.time()-self.current_computer_time
+
+            timediff_scaled = self.playback_speed*timediff
             
-            index=np.argmin(abs(self.Image_Time-(timediff+self.current_track_time)))
+            index = np.argmin(abs(self.Image_Time-(timediff_scaled+self.current_track_time)))
+
             if index>self.positionSlider_prevValue:
-                self.current_computer_time+=timediff
-                self.current_track_time+=timediff
+                self.current_computer_time += timediff
+                self.current_track_time += timediff_scaled
                 self.positionSlider.setValue(index)
                 
         else:
