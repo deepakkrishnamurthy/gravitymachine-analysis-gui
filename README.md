@@ -1,5 +1,7 @@
 # Gravity Machine Analysis GUI
 
+
+
 ## Introduction
 This is a custom GUI-based data analysis tool for visualizing and analyzing gravity machine datasets. Gravity machine is the nickname for Scale-free Vertical Tracking Microscopy, a method developed by [D Krishnamurthy et. al : Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography](https://doi.org/10.1101/610246). 
 
@@ -21,11 +23,11 @@ To change track parameters such as Pixel size, chamber dimensions etc., navigate
 To change the playback speed of the video, navigate to Video > Video Parameters or hit 'Ctrl + V'. Use the slider or entry box to enter the playback factor. Playback factor of '1' corresponds to real-time playback.
 
 
-To cite this tool:
+## To cite this tool:
 
 Krishnamurthy, Deepak, Hongquan Li, François Benoit du Rey, Pierre Cambournac, Adam Larson, and Manu Prakash. "Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography." bioRxiv (2019): 610246.
 
 
 
 
-Contributors: Deepak Krishnamurthy, Francois benoit du Rey and Ethan Li
+## Contributors: Deepak Krishnamurthy, Francois benoit du Rey and Ethan Li
