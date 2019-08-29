@@ -1,6 +1,4 @@
 # Gravity Machine Analysis GUI 
-<img src="https://github.com/deepakkrishnamurthy/GravityMachineAnalysis_GUI/blob/master/DataAnalyserGui/icon/icon_2.png" alt="GM"
-	title="GM" width="150" height="100" />
 
 ## Introduction
 This is a custom GUI-based data analysis tool for visualizing and analyzing gravity machine datasets. Gravity machine is the nickname for Scale-free Vertical Tracking Microscopy, a method developed by [D Krishnamurthy et. al : Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography](https://doi.org/10.1101/610246). 
