@@ -1,7 +1,6 @@
 # Gravity Machine Analysis GUI
 
-![alt text][logo]
-[logo]: https://github.com/deepakkrishnamurthy/GravityMachineAnalysis_GUI/blob/master/DataAnalyserGui/icon/icon_2.png
+![alt text](https://github.com/deepakkrishnamurthy/GravityMachineAnalysis_GUI/blob/master/DataAnalyserGui/icon/icon_2.png "GM logo")
 
 
 ## Introduction
@@ -32,4 +31,5 @@ Krishnamurthy, Deepak, Hongquan Li, François Benoit du Rey, Pierre Cambournac, 
 
 
 
-## Contributors: Deepak Krishnamurthy, Francois benoit du Rey and Ethan Li
+#### Contributors: 
+Deepak Krishnamurthy, Francois benoit du Rey and Ethan Li
