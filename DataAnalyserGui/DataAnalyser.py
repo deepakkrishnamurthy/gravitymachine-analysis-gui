@@ -19,7 +19,7 @@ from ImageSaver import ImageSaver
 
 from aqua.qsshelper import QSSHelper
 
-			       
+                   
 # Testing to see branch changes
  
 '''
@@ -376,6 +376,51 @@ class optionsTrack_Dialog(QtGui.QDialog):
         self.y_offset_value = round(self.spinbox_y_offset.value(),1)
         self.y_offset.emit(self.y_offset_value)
 
+# class optionsImage_dialog(QtGui.QDialog):
+
+
+class optionsVideo_dialog(QtGui.QDialog):
+
+    playback_speed = QtCore.pyqtSignal(float)
+
+    def __init__(self,playback_speed_value = 1,parent=None):
+
+        super().__init__()
+        
+        self.playback_speed_value = playback_speed_value
+
+        self.setWindowTitle('Playback Parameters')
+
+        self.label_speed = QtGui.QLabel('Playback speed')
+        self.hslider_speed = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.hslider_speed.setRange(0,50)
+        self.spinbox_speed=QtGui.QDoubleSpinBox()
+        self.spinbox_speed.setRange(0,5)
+        self.spinbox_speed.setSingleStep(0.1)
+        self.spinbox_speed.setValue(self.playback_speed_value)
+        self.hslider_speed.valueChanged.connect(self.spinbox_speed_setValue)
+        self.spinbox_speed.valueChanged.connect(self.hslider_speed_setValue)
+
+        sliderSpeed_layout=QtGui.QHBoxLayout()
+        sliderSpeed_layout.addWidget(self.label_speed)
+        sliderSpeed_layout.addWidget(self.hslider_speed)
+        sliderSpeed_layout.addWidget(self.spinbox_speed)
+
+
+        self.setLayout(sliderSpeed_layout)
+        
+        self.setStyleSheet(qss)
+
+    def spinbox_speed_setValue(self,value):
+        newvalue=float(value)/10.
+        self.spinbox_speed.setValue(newvalue)
+        self.playback_speed.emit(newvalue)
+
+    def hslider_speed_setValue(self,value):
+        self.hslider_speed.setValue(int(value*10))
+
+        
+
 
 
 '''
@@ -384,7 +429,7 @@ class optionsTrack_Dialog(QtGui.QDialog):
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''
 class options3D_Dialog(QtGui.QDialog):
-    traj_linewidth=QtCore.pyqtSignal(float)
+    traj_linewidth = QtCore.pyqtSignal(float)
     grid_linewidth=QtCore.pyqtSignal(float)
     camera_distance=QtCore.pyqtSignal(int)
     background=QtCore.pyqtSignal(str)
@@ -671,6 +716,7 @@ class MainWindow(QtWidgets.QMainWindow):
         menuBar = self.menuBar()
         fileMenu = menuBar.addMenu('&File')
         editmenu = menuBar.addMenu('&Edit')
+        Videomenu = menuBar.addMenu('&Video')
         
         # Create new action
         openAction = QtGui.QAction(QtGui.QIcon('open.png'), '&Open', self)        
@@ -697,6 +743,11 @@ class MainWindow(QtWidgets.QMainWindow):
         optionTrack.setShortcut('Ctrl+T')
         optionTrack.setStatusTip('Track Parameters')
         optionTrack.triggered.connect(self.options_TrackParams)
+
+        optionVideo = QtGui.QAction(QtGui.QIcon('open.png'), '&Video Parameters', self)        
+        optionVideo.setShortcut('Ctrl+V')
+        optionVideo.setStatusTip('Video Parameters')
+        optionVideo.triggered.connect(self.options_VideoParams)
         
         fileMenu.addAction(openAction)
         fileMenu.addAction(save3DplotAction)
@@ -705,6 +756,7 @@ class MainWindow(QtWidgets.QMainWindow):
         editmenu.addAction(optionTrack)
         editmenu.addAction(option3DplotAction)
         editmenu.addAction(optionTimeInterval)
+        Videomenu.addAction(optionVideo)
         
         self.central_widget.video_window.imageName.connect(self.update_statusBar)
         self.central_widget.csv_reader.Time_data.connect(self.initialize_image_time)
@@ -774,6 +826,12 @@ class MainWindow(QtWidgets.QMainWindow):
         options_dialog_track.x_offset.connect(self.central_widget.plot3D.update_x_offset)
         options_dialog_track.y_offset.connect(self.central_widget.plot3D.update_y_offset)
         options_dialog_track.exec_()
+
+    def options_VideoParams(self):
+
+        options_dialog_video = optionsVideo_dialog(playback_speed_value = self.central_widget.video_window.playback_speed)
+        options_dialog_video.playback_speed.connect(self.central_widget.video_window.update_playback_speed)
+        options_dialog_video.exec_()
 
 
 
