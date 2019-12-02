@@ -171,7 +171,7 @@ class plot3D(gl.GLViewWidget):
         
     def generatePgColormap(self):
         colors=self.cmap(np.arange(256))
-        self.colors=colors[0:-50]
+        self.colors=colors[50:]
         positions = np.linspace(0, 1, len(self.colors))
         pgMap = pg.ColorMap(positions, self.colors)
         self.color_map=mpl.colors.ListedColormap(self.colors)

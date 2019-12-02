@@ -37,7 +37,7 @@ class ImageWidget(pg.GraphicsLayoutWidget):
         self.view.addItem(self.img)
 
         # Contrast factor for image
-        self.clahe_cliplimit = 3
+        self.clahe_cliplimit = 1.5
 
         # Create a CLAHE object 
         self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
@@ -55,25 +55,30 @@ class ImageWidget(pg.GraphicsLayoutWidget):
 #        
 #        self.img.setImage(image_gray)
         
-    def refresh_image(self, image_bgr): 
+    def refresh_image(self, image_bgr, grayscale = False): 
 
 
-        image_bgr=cv2.rotate(image_bgr,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
+        image_bgr = cv2.rotate(image_bgr,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
         
-        # Convert from BGR to LAB colorspace
-        image_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
+        if(grayscale is True):
+            image_gs = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+            image_clahe = self.clahe.apply(image_gs)
+            self.img.setImage(image_clahe)
+        else:
+            # Convert from BGR to LAB colorspace
+            image_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
+            
+            # Split the LAB image into individual channels
+            L,A,B = cv2.split(image_lab)
+            
+            # Apply CLAHE contrast enhancement 
+            CL = self.clahe.apply(L)
         
-        # Split the LAB image into individual channels
-        L,A,B = cv2.split(image_lab)
+            image_lab = cv2.merge((CL,A,B))
         
-        # Apply CLAHE contrast enhancement 
-        CL = self.clahe.apply(L)
-        
-        image_lab = cv2.merge((CL,A,B))
-        
-        image_rgb = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
+            image_rgb = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
                 
-        self.img.setImage(image_rgb)
+            self.img.setImage(image_rgb)
 
     def update_clahe(self):
         # Update clahe parameters
@@ -96,7 +101,7 @@ class VideoWindow(QtWidgets.QWidget):
     record_signal=QtCore.pyqtSignal(bool)
     image_to_record=QtCore.pyqtSignal(np.ndarray, str)
     
-    def __init__(self, PixelPermm = 1123, parent=None):
+    def __init__(self, PixelPermm = 314, parent=None):
         super(VideoWindow, self).__init__(parent)
 
         #Video parameters
@@ -112,10 +117,10 @@ class VideoWindow(QtWidgets.QWidget):
         self.PixelPermm = PixelPermm
 
         # Font and Font position parameters for annotating images
-        self.scalebarSize = 100
-        self.baseFontScale = 1
-        self.timeStampPos_base = (20, 30)
-        self.scaleBar_textOffset_base = (220,25)
+        self.scalebarSize = 250
+        self.baseFontScale = 0.01
+        self.timeStampPos_base = (20, 40)
+        self.scaleBar_textOffset_base = (80,25)
 
         self.newData = True
 
@@ -198,7 +203,7 @@ class VideoWindow(QtWidgets.QWidget):
         if(len(self.Image_Time) is not 0):
             currTime = self.Image_Time[self.current_track_index]
             # print('Current Image Time: {}'.format(currTime))
-            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 1, cv2.LINE_AA)
 
             # if(LED_intensity>0):
             #     cv2.putText(image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
@@ -216,11 +221,11 @@ class VideoWindow(QtWidgets.QWidget):
 
             scaleBar_text_offset = self.scaleBar_text_offset()
 
-            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 1, cv2.LINE_AA)
+#
+            cv2.line(image, (x_start, y_start), (x_end, y_end), color =(255,255,255), thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
 
-            cv2.line(image, (x_start, y_start), (x_end, y_end), color =(255,255,255),thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
-
-        self.image_widget.refresh_image(image)
+        self.image_widget.refresh_image(image, grayscale=True)
         self.imageName.emit(image_name)
         if self.isRecording:
             # print('Current Image : {}'.format(image_name))

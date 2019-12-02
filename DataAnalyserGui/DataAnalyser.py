@@ -39,7 +39,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
         
         #widgets
-        self.video_window=VideoWindow()
+        self.video_window=VideoWindow(PixelPermm = 314)
         self.fps=None #fps for saving
         self.xplot=PlotWidget('X displacement', label = 'X',color ='r')
         self.yplot=PlotWidget('Y displacement', label = 'Y',color ='g')
@@ -92,7 +92,11 @@ class CentralWidget(QtWidgets.QWidget):
         
         # v_layout.addWidget(self.groupbox_parameters)
 #        v_layout.addLayout(plot3D_layout)
-        v_layout.addWidget(self.zplot)
+        
+        #----------------------------------------------------------------------
+        # Toggle Comment/Uncomment to turn Z-plot ON and OFF
+        #----------------------------------------------------------------------
+#        v_layout.addWidget(self.zplot)
 
 
         # v_layout.addWidget(self.video_window)
@@ -797,7 +801,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
-            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
+            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile, Tmin = 0 , Tmax = 0)
             self.central_widget.video_window.initialize_parameters()
 
             # Need to connect the new Image Names

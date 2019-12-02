@@ -52,7 +52,7 @@ class CSV_Reader(QtCore.QObject):
             V.append((X[i+1]-X[i-1])/deltaT)
         
     
-    def open_newCSV(self,directory, trackFile):
+    def open_newCSV(self,directory, trackFile, Tmin = None, Tmax = None):
 
         Data=[]
 
@@ -61,31 +61,51 @@ class CSV_Reader(QtCore.QObject):
 
         trackPath = os.path.join(directory, self.file_name)
         
-
+        
         self.df = pd.read_csv(trackPath)
+        
+        self.df['Time'] = self.df['Time'] - self.df['Time'][0]
+        
+        
+        if(Tmax == 0 or Tmax is None):
+            Tmax = np.max(self.df['Time'])
+        
+        if(Tmin is not None and Tmax is not None):
+            # Crop the trajectory
+           
+            
+            self.df = self.df.loc[(self.df['Time']>=Tmin) & (self.df['Time'] <= Tmax)]
+            
+            
 
         self.ColumnNames = list(self.df.columns.values)
 
-        self.Time = np.array(self.df['Time'])            # Time stored is in milliseconds
-        self.Xobjet = np.array(self.df['Xobj'])             # Xpos in motor full-steps
-        self.Yobjet = np.array(self.df['Yobj'])             # Ypos in motor full-steps
+        self.Time = np.array(self.df['Time'] - self.df['Time'][0])            # Time stored is in milliseconds
+        if('Xobj' in self.ColumnNames):
+            self.Xobjet = np.array(self.df['Xobj'])             # Xpos in motor full-steps
+            self.Yobjet = np.array(self.df['Yobj'])             # Ypos in motor full-steps
+        
+            
+        else:
+            self.Xobjet = np.array(self.df['Xobjet'])             # Xpos in motor full-steps
+            self.Yobjet = np.array(self.df['Yobjet'])             # Ypos in motor full-steps
+       
+            
         
         if('Xobj_image' in self.ColumnNames):
             self.Xobj_image = np.array(self.df['Xobj_image'])  
 
-        Zobjet = np.array(self.df['Zobj'])         # Zpos is in encoder units
+      
         
-        ThetaWheel = np.array(self.df['ThetaWheel'])
+    
 
 
         self.ZobjWheel =  np.array(self.df['ZobjWheel'])
 
-        ManualTracking = np.array(self.df['Manual Tracking'])
+ 
         self.ImageNames = self.df['Image name']
         print(self.ImageNames)
-        focusMeasure = np.array(self.df['Focus Measure'])
-        focusPhase = np.array(self.df['Liquid Lens Phase'])
-        MaxfocusMeasure = np.array(self.df['Y FM maximum'])
+
 
 
 
