@@ -28,7 +28,7 @@ class CSV_Reader(QtCore.QObject):
 #    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
     
     
-    def __init__(self, parent=None, Width = 3, Length = 30):
+    def __init__(self, parent=None, Width = 5, Length = 30, flip_z = False):
         super(CSV_Reader, self).__init__(parent)
         # File name for .csv file is now auto-detected
         self.file_name=''
@@ -43,6 +43,7 @@ class CSV_Reader(QtCore.QObject):
         self.W =Width
         self.L = Length
         self.df = None
+        self.flip_z = flip_z
     
     
     def computeSpeed(self,X,T):
@@ -96,11 +97,12 @@ class CSV_Reader(QtCore.QObject):
             self.Xobj_image = np.array(self.df['Xobj_image'])  
 
       
-        
-    
-
-
         self.ZobjWheel =  np.array(self.df['ZobjWheel'])
+    
+        if(self.flip_z):
+            self.ZobjWheel =  -self.ZobjWheel
+
+        
 
  
         self.ImageNames = self.df['Image name']

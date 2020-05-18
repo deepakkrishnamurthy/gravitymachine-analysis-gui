@@ -37,7 +37,7 @@ class ImageWidget(pg.GraphicsLayoutWidget):
         self.view.addItem(self.img)
 
         # Contrast factor for image
-        self.clahe_cliplimit = 1.5
+        self.clahe_cliplimit = 3.0
 
         # Create a CLAHE object 
         self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
@@ -117,10 +117,16 @@ class VideoWindow(QtWidgets.QWidget):
         self.PixelPermm = PixelPermm
 
         # Font and Font position parameters for annotating images
+        # Settings for 720p images
+        # self.scalebarSize = 20
+        # self.baseFontScale = 0.01
+        # self.timeStampPos_base = (20, 40)
+        # self.scaleBar_textOffset_base = (180,25)
+
         self.scalebarSize = 250
-        self.baseFontScale = 0.01
-        self.timeStampPos_base = (20, 40)
-        self.scaleBar_textOffset_base = (80,25)
+        self.baseFontScale = 1
+        self.timeStampPos_base = (20,50)
+        self.scaleBar_textOffset_base = (220,25)
 
         self.newData = True
 
@@ -203,7 +209,7 @@ class VideoWindow(QtWidgets.QWidget):
         if(len(self.Image_Time) is not 0):
             currTime = self.Image_Time[self.current_track_index]
             # print('Current Image Time: {}'.format(currTime))
-            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
 
             # if(LED_intensity>0):
             #     cv2.putText(image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
@@ -221,8 +227,8 @@ class VideoWindow(QtWidgets.QWidget):
 
             scaleBar_text_offset = self.scaleBar_text_offset()
 
-            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 1, cv2.LINE_AA)
-#
+            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+
             cv2.line(image, (x_start, y_start), (x_end, y_end), color =(255,255,255), thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
 
         self.image_widget.refresh_image(image, grayscale=True)

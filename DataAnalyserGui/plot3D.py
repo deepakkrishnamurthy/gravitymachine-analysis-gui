@@ -37,9 +37,9 @@ class plot3D(gl.GLViewWidget):
         self.y_offset = 0
         self.y_offset_prev = self.y_offset
 
-        self.size_traj=0.12
-        self.size_grid = 1
-        self.size_marker = 1
+        self.size_traj = 0.4
+        self.size_grid = 2
+        self.size_marker = 2
         self.cmap=cmocean.cm.deep
         self.Z_curr = 0
         self.Z_prev = 0
@@ -171,7 +171,7 @@ class plot3D(gl.GLViewWidget):
         
     def generatePgColormap(self):
         colors=self.cmap(np.arange(256))
-        self.colors=colors[50:]
+        self.colors=colors[:-50]
         positions = np.linspace(0, 1, len(self.colors))
         pgMap = pg.ColorMap(positions, self.colors)
         self.color_map=mpl.colors.ListedColormap(self.colors)

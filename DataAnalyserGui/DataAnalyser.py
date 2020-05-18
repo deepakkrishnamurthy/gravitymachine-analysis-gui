@@ -15,7 +15,7 @@ from plot3D import plot3D
 from VideoWindow import VideoWindow
 from PlotWidget import PlotWidget
 from VideoSaver import VideoSaver
-from ImageSaver import ImageSaver
+
 
 from aqua.qsshelper import QSSHelper
 
@@ -46,7 +46,7 @@ class CentralWidget(QtWidgets.QWidget):
         self.zplot=PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
         
         #Tool
-        self.csv_reader=CSV_Reader()
+        self.csv_reader=CSV_Reader(flip_z = False)
         
         self.plot3D = plot3D()
         
@@ -109,24 +109,24 @@ class CentralWidget(QtWidgets.QWidget):
         # VERTICAL LAYOUT ON THE LEFT
         h_layout = QtGui.QHBoxLayout()
         
-        # v_left_layout=QtGui.QVBoxLayout()
-        # v_left_layout.addWidget(self.video_window)
+        v_left_layout=QtGui.QVBoxLayout()
+        v_left_layout.addWidget(self.video_window)
         
-        # # v_right_layout=QtGui.QVBoxLayout()
-        # # v_right_layout.addWidget(self.xplot)
-        # # v_right_layout.addWidget(self.yplot)
-        # # v_right_layout.addWidget(self.zplot)
-        
-        # # v_right_layout.setStretchFactor(self.xplot,1)
-        # # v_right_layout.setStretchFactor(self.yplot,1)
-        # # v_right_layout.setStretchFactor(self.zplot,1)
-        
-#         h_layout.addLayout(v_left_layout)
-        # h_layout.addLayout(v_right_layout)
-#         h_layout.addLayout(plot3D_layout)
+        v_right_layout=QtGui.QVBoxLayout()
+        v_right_layout.addWidget(self.xplot)
+        v_right_layout.addWidget(self.yplot)
+        v_right_layout.addWidget(self.zplot)
 
-        h_layout.addLayout(v_layout)
+        v_right_layout.setStretchFactor(self.xplot,1)
+        v_right_layout.setStretchFactor(self.yplot,1)
+        v_right_layout.setStretchFactor(self.zplot,1)
+        
+        h_layout.addLayout(v_left_layout)
+        h_layout.addLayout(v_right_layout)
         h_layout.addLayout(plot3D_layout)
+
+#        h_layout.addLayout(v_layout)
+#        h_layout.addLayout(plot3D_layout)
 
         
         # h_layout.setStretchFactor(v_left_layout,1)
@@ -246,7 +246,7 @@ class optionsTrack_Dialog(QtGui.QDialog):
     x_offset = QtCore.pyqtSignal(float)
     y_offset = QtCore.pyqtSignal(float)
 
-    def __init__(self, width_value = 4, length_value = 30, x_offset_value = 0, y_offset_value = 0, PixelPermm_value=1123, parent = None):
+    def __init__(self, width_value = 4, length_value = 30, x_offset_value = 0, y_offset_value = 0, PixelPermm_value=314, parent = None):
         super().__init__()
         self.setWindowTitle('Track Parameters')
 
@@ -397,9 +397,9 @@ class optionsVideo_dialog(QtGui.QDialog):
 
         self.label_speed = QtGui.QLabel('Playback speed')
         self.hslider_speed = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.hslider_speed.setRange(0,50)
+        self.hslider_speed.setRange(0,200)
         self.spinbox_speed=QtGui.QDoubleSpinBox()
-        self.spinbox_speed.setRange(0,5)
+        self.spinbox_speed.setRange(0,20)
         self.spinbox_speed.setSingleStep(0.1)
         self.spinbox_speed.setValue(self.playback_speed_value)
         self.hslider_speed.valueChanged.connect(self.spinbox_speed_setValue)
@@ -771,7 +771,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.directory = QtGui.QFileDialog.getExistingDirectory(self)
         
-        self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV fles (*.csv)")
+        self.trackFile, *rest = QtGui.QFileDialog.getOpenFileName(self, 'Open file',self.directory,"CSV files (*.csv)")
         
         # self.trackFile, *rest = os.path.split(self.trackFile)
         
@@ -801,7 +801,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
-            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile, Tmin = 0 , Tmax = 0)
+            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile, Tmin = 0 , Tmax = 3600)
             self.central_widget.video_window.initialize_parameters()
 
             # Need to connect the new Image Names
