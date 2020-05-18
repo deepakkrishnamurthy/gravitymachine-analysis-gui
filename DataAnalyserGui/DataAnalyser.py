@@ -41,9 +41,9 @@ class CentralWidget(QtWidgets.QWidget):
         #widgets
         self.video_window=VideoWindow(PixelPermm = 314)
         self.fps=None #fps for saving
-        self.xplot=PlotWidget('X displacement', label = 'X',color ='r')
-        self.yplot=PlotWidget('Y displacement', label = 'Y',color ='g')
-        self.zplot=PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
+        self.xplot = PlotWidget('X displacement', label = 'X',color ='r')
+        self.yplot = PlotWidget('Y displacement', label = 'Y',color ='g')
+        self.zplot = PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
         
         #Tool
         self.csv_reader=CSV_Reader(flip_z = False)
@@ -829,6 +829,11 @@ class MainWindow(QtWidgets.QMainWindow):
         options_dialog_track.length.connect(self.central_widget.plot3D.update_length)
         options_dialog_track.x_offset.connect(self.central_widget.plot3D.update_x_offset)
         options_dialog_track.y_offset.connect(self.central_widget.plot3D.update_y_offset)
+        # Update the 2D plots with the offsets
+        options_dialog_track.x_offset.connect(self.central_widget.xplot.update_offset)
+        options_dialog_track.y_offset.connect(self.central_widget.yplot.update_offset)
+        
+        
         options_dialog_track.exec_()
 
     def options_VideoParams(self):

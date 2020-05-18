@@ -25,10 +25,11 @@ fontTicks.setPixelSize(18)
 
 class PlotWidget(pg.GraphicsLayoutWidget):
 
-    def __init__(self, title, label=None, color='w', parent=None):
+    def __init__(self, title, label=None, color='w', offset = 0, parent=None):
         super().__init__(parent)
         self.title = title
-        # plot Zobjet
+        
+        self.offset = offset
 
         self.Abs = np.array([])
         self.Ord = np.array([])
@@ -77,12 +78,17 @@ class PlotWidget(pg.GraphicsLayoutWidget):
 
     def update_plot(self, Ord_data):
         self.Ord = Ord_data
-        self.curve.setData(self.Abs, self.Ord)
+        self.curve.setData(self.Abs, self.Ord - self.offset)
         self.curve.setDownsampling(auto=True)
 
     def update_cursor(self, time):
         self.point = QtCore.QPointF(time, 0)
         self.vLine.setPos(self.point)
+        
+    def update_offset(self, offset):
+        self.offset = offset
+        self.update_plot(self.Ord)
+        
 
     def qimage_to_numpy(self, image):
         # Convert a QImage to a numpy array
