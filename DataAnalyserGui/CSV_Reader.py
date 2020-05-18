@@ -144,41 +144,41 @@ class CSV_Reader(QtCore.QObject):
 
         #To recenter the data in the case of a bad calibration
         
-        if xmax-xmin>self.L/2 and (xmin<-self.L/2 or xmax>self.L/2):
-            delta_x=-np.mean(self.Xobjet)
-            self.Xobjet=self.Xobjet+delta_x
-            xmin+=delta_x
-            xmax+=delta_x
-        
-        elif xmin<-self.L/2:
-            delta_x=-self.L/2-xmin
-            self.Xobjet=self.Xobjet+delta_x
-            xmin+=delta_x
-            xmax+=delta_x
-            
-        elif xmax>self.L/2:
-            delta_x=self.L/2-xmax
-            self.Xobjet=self.Xobjet+delta_x
-            xmin+=delta_x
-            xmax+=delta_x
-        
-        if ymax-ymin>self.W and (ymin<0 or ymax>self.W):
-            delta_y=-(np.mean(self.Yobjet)-self.W/2)
-            self.Yobjet=self.Yobjet+delta_y
-            ymin+=delta_y
-            ymax+=delta_y
-            
-        elif ymin<0:
-            delta_y=-ymin
-            self.Yobjet=self.Yobjet+delta_y
-            ymin+=delta_y
-            ymax+=delta_y
-            
-        elif ymax>self.W:
-            delta_y=self.W-ymax
-            self.Yobjet=self.Yobjet+delta_y
-            ymin+=delta_y
-            ymax+=delta_y
+#        if xmax-xmin>self.L/2 and (xmin<-self.L/2 or xmax>self.L/2):
+#            delta_x=-np.mean(self.Xobjet)
+#            self.Xobjet=self.Xobjet+delta_x
+#            xmin+=delta_x
+#            xmax+=delta_x
+#        
+#        elif xmin<-self.L/2:
+#            delta_x=-self.L/2-xmin
+#            self.Xobjet=self.Xobjet+delta_x
+#            xmin+=delta_x
+#            xmax+=delta_x
+#            
+#        elif xmax>self.L/2:
+#            delta_x=self.L/2-xmax
+#            self.Xobjet=self.Xobjet+delta_x
+#            xmin+=delta_x
+#            xmax+=delta_x
+#        
+#        if ymax-ymin>self.W and (ymin<0 or ymax>self.W):
+#            delta_y=-(np.mean(self.Yobjet)-self.W/2)
+#            self.Yobjet=self.Yobjet+delta_y
+#            ymin+=delta_y
+#            ymax+=delta_y
+#            
+#        elif ymin<0:
+#            delta_y=-ymin
+#            self.Yobjet=self.Yobjet+delta_y
+#            ymin+=delta_y
+#            ymax+=delta_y
+#            
+#        elif ymax>self.W:
+#            delta_y=self.W-ymax
+#            self.Yobjet=self.Yobjet+delta_y
+#            ymin+=delta_y
+#            ymax+=delta_y
             
         #Speed computation
         self.Vx=np.array([])
