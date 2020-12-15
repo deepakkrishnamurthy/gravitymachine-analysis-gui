@@ -112,26 +112,26 @@ class CentralWidget(QtWidgets.QWidget):
         v_left_layout=QtGui.QVBoxLayout()
         v_left_layout.addWidget(self.video_window)
         
-        v_right_layout=QtGui.QVBoxLayout()
-        v_right_layout.addWidget(self.xplot)
-        v_right_layout.addWidget(self.yplot)
-        v_right_layout.addWidget(self.zplot)
+#        v_right_layout=QtGui.QVBoxLayout()
+#        v_right_layout.addWidget(self.xplot)
+#        v_right_layout.addWidget(self.yplot)
+#        v_right_layout.addWidget(self.zplot)
 
-        v_right_layout.setStretchFactor(self.xplot,1)
-        v_right_layout.setStretchFactor(self.yplot,1)
-        v_right_layout.setStretchFactor(self.zplot,1)
-        
+#        v_right_layout.setStretchFactor(self.xplot,1)
+#        v_right_layout.setStretchFactor(self.yplot,1)
+#        v_right_layout.setStretchFactor(self.zplot,1)
+
         h_layout.addLayout(v_left_layout)
-        h_layout.addLayout(v_right_layout)
+#        h_layout.addLayout(v_right_layout)
         h_layout.addLayout(plot3D_layout)
 
 #        h_layout.addLayout(v_layout)
 #        h_layout.addLayout(plot3D_layout)
 
         
-        # h_layout.setStretchFactor(v_left_layout,1)
-        # h_layout.setStretchFactor(v_right_layout,1)
-        # h_layout.setStretchFactor(plot3D_layout,1)
+        h_layout.setStretchFactor(v_left_layout,1)
+#        h_layout.setStretchFactor(v_right_layout,1)
+        h_layout.setStretchFactor(plot3D_layout,1)
         # Final action     
 #        self.setLayout(v_layout)
         self.setLayout(h_layout)
@@ -209,6 +209,8 @@ class CentralWidget(QtWidgets.QWidget):
         self.csv_reader.Zobjet_data.connect(self.plot3D.update_Z)
         
         self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
+        
+        self.csv_reader.obj_centroids.connect(self.video_window.initialize_obj_centroids)
 
         # self.csv_reader.LED_intensity_data.connect(self.video_window.initialize_led_intensity)
 
@@ -897,7 +899,7 @@ if __name__ == '__main__':
     
 
     #Mainwindow creation
-    win= MainWindow()
+    win = MainWindow()
     qss = QSSHelper.open_qss(os.path.join('aqua', 'aqua.qss'))
     win.setStyleSheet(qss)
     win.central_widget.connect_all()

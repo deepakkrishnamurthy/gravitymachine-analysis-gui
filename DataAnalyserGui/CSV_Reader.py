@@ -22,13 +22,17 @@ class CSV_Reader(QtCore.QObject):
     Xobjet_data = QtCore.pyqtSignal(np.ndarray)
     Yobjet_data = QtCore.pyqtSignal(np.ndarray)
     Zobjet_data = QtCore.pyqtSignal(np.ndarray)
+    
+    obj_centroids = QtCore.pyqtSignal(np.ndarray, np.ndarray)
+    Zobj_image_data = QtCore.pyqtSignal(np.ndarray)
+    
     ImageNames_data = QtCore.pyqtSignal(np.ndarray)
     ImageTime_data = QtCore.pyqtSignal(np.ndarray)
     LED_intensity_data = QtCore.pyqtSignal(np.ndarray)
 #    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
     
     
-    def __init__(self, parent=None, Width = 5, Length = 30, flip_z = False):
+    def __init__(self, parent=None, Width = 5, Length = 30, flip_z = False, pixelPermm = 449):
         super(CSV_Reader, self).__init__(parent)
         # File name for .csv file is now auto-detected
         self.file_name=''
@@ -44,6 +48,8 @@ class CSV_Reader(QtCore.QObject):
         self.L = Length
         self.df = None
         self.flip_z = flip_z
+        
+        self.pixelPermm = pixelPermm
     
     
     def computeSpeed(self,X,T):
@@ -95,8 +101,13 @@ class CSV_Reader(QtCore.QObject):
         
         if('Xobj_image' in self.ColumnNames):
             self.Xobj_image = np.array(self.df['Xobj_image'])  
+            
+        if('Zobj' in self.ColumnNames):
+            self.Zobj_image = np.array(self.df['Zobj'])  
+            
+        self.Xobj_image, self.Zobj_image = (np.array(self.pixelPermm*self.Xobj_image, dtype = 'int'), np.array(self.pixelPermm*self.Zobj_image, dtype='int'))
 
-      
+         
         self.ZobjWheel =  np.array(self.df['ZobjWheel'])
     
         if(self.flip_z):
@@ -199,6 +210,8 @@ class CSV_Reader(QtCore.QObject):
         self.Xobjet_data.emit(self.Xobjet[self.index_min:self.index_max+1])
         self.Yobjet_data.emit(self.Yobjet[self.index_min:self.index_max+1])
         self.Zobjet_data.emit(self.ZobjWheel[self.index_min:self.index_max+1])
+        
+        self.obj_centroids.emit(self.Xobj_image[self.index_min:self.index_max+1], self.Zobj_image[self.index_min:self.index_max+1])
         print('data sent')
         
     def send_image_time(self):
