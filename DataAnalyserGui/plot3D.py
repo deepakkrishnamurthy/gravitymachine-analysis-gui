@@ -406,3 +406,46 @@ class plot3D(gl.GLViewWidget):
         file_directory=directory+'colorbar.svg'
         plt.savefig(file_directory)
         
+
+class plot3D_widget(QtWidgets.QWidget):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_components()
+
+    def add_components(self):
+
+        # widgets
+        self.plot3D = plot3D()
+
+        self.panVSlider = QtGui.QSlider(QtCore.Qt.Vertical)
+        self.panVSlider.setRange(-400, 400)
+        self.panVSlider.setValue(0)
+        
+        self.panHSlider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.panHSlider.setRange(-200, 200)
+        self.panHSlider.setValue(0)
+        
+        self.home3Dbutton=QtGui.QPushButton()
+        self.home3Dbutton.setFixedSize(20,20)
+        self.home3Dbutton.setIcon(QtGui.QIcon('icon/home.png'))
+
+        # Connections
+        self.panHSlider.valueChanged.connect(self.plot3D.pan_X)
+        self.panVSlider.valueChanged.connect(self.plot3D.pan_Z)
+        self.home3Dbutton.clicked.connect(self.plot3D.reset_view)
+        self.plot3D.reset_sliders.connect(self.reset_sliders)
+
+        # Layout
+        plot3D_layout=QtGui.QGridLayout()
+        plot3D_layout.addWidget(self.plot3D,0,0,1,1)
+        plot3D_layout.addWidget(self.panVSlider,0,1,1,1)
+        plot3D_layout.addWidget(self.panHSlider,1,0,1,1)
+        plot3D_layout.addWidget(self.home3Dbutton,1,1,1,1)
+
+        self.setLayout(plot3D_layout)
+
+    def reset_sliders(self,value):
+        self.panHSlider.setValue(0)
+        self.panVSlider.setValue(0)
+
