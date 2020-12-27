@@ -12,53 +12,7 @@ import cv2 as cv2
 import time as time
 import os
 
-
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-'''
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#                         Image_Widget
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-''' 
-   
-class ImageWidget(pg.GraphicsLayoutWidget):
-    
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.view=self.addViewBox()
-        
-        ## lock the aspect ratio so pixels are always square
-        self.view.setAspectLocked(True)
-        
-        ## Create image item
-        self.img=pg.ImageItem(border='w')
-        self.view.addItem(self.img)
-
-        
-
-        
-#    def refresh_image(self, image_bgr): 
-#
-#        image_gray=cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
-#
-#        image_gray=cv2.rotate(image_gray,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
-#        
-#        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6))
-#                
-#        image_gray = clahe.apply(image_gray)
-#        
-#        self.img.setImage(image_gray)
-        
-    
-
-#    def update_clahe(self):
-#        # Update clahe parameters
-#        self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
-
-
-        
+font = cv2.FONT_HERSHEY_SIMPLEX 
         
 '''
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,6 +27,9 @@ class VideoWindow(QtWidgets.QWidget):
     imageName=QtCore.pyqtSignal(str)
     record_signal=QtCore.pyqtSignal(bool)
     image_to_record=QtCore.pyqtSignal(np.ndarray, str)
+
+    roi_pos_signal = QtCore.pyqtSignal(int, int)
+    roi_size_signal = QtCore.pyqtSignal(int)
     
     def __init__(self, PixelPermm = 314, parent=None):
         super(VideoWindow, self).__init__(parent)
@@ -170,6 +127,18 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSpinBox.setSingleStep(0.01)
         self.positionSpinBox.setEnabled(False)
         self.positionSpinBox_prevValue=0
+
+        # Add ROI
+        self.roi_pos = (0.5,0.5)
+        self.roi_size = (100, 100)
+
+        self.ROI = pg.CircleROI(self.roi_pos, self.roi_size, scaleSnap = True, translateSnap = True)
+        self.ROI.addScalehandle((0,0),(1,1))
+        self.graphics_widget.addItem(self.ROI)
+        self.ROI.hide()
+        self.ROI.sigRegionChanged.connect(self.updateROI)
+        self.roi_pos = self.ROI.pos()
+        self.roi_size = self.ROI.size()
         
         # Connections
         self.positionSlider.valueChanged.connect(self.positionSpinBox_setValue)
@@ -189,7 +158,34 @@ class VideoWindow(QtWidgets.QWidget):
 
 
         self.setLayout(layout)
-        
+
+    def updateROI(self):
+        self.roi_pos = self.ROI.pos()
+        self.roi_size = self.ROI.size()
+
+        self.send_roi_data()
+
+    def toggle_ROI_show(self, flag):
+
+        if(flag == True):
+            self.ROI.show()
+        else:
+            self.ROI.hide()
+
+    def send_roi_data(self):
+
+        roi_width = self.roi_size[0]
+        roi_height = self.roi_size[1]
+
+        roi_radius = (self.roi_width + self.roi_height)/2.0
+
+        roi_center_x = int(self.roi_pos[0] + roi_width/2.0)
+        roi_center_y = int(self.roi_pos[1] + roi_height/2.0)
+
+        self.roi_pos_signal.emit(self.roi_center_x, self.roi_center_y)
+        self.roi_size_signal.emit(int(roi_radius))
+
+
     def refreshImage(self,image_name):
         # Changed so that it can handle images being split among multiple sub-directories.
         file_directory= os.path.join(self.image_directory, self.image_dict[image_name],image_name)
