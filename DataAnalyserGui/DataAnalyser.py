@@ -13,7 +13,7 @@ from plot3D import plot3D_widget
 from VideoWindow import VideoWindow
 from PlotWidget import PlotWidget
 from VideoSaver import VideoSaver
-
+from imageAnalysisWidget import imageAnalysisWidget
 
 from aqua.qsshelper import QSSHelper
 
@@ -41,7 +41,7 @@ class CentralWidget(QtWidgets.QWidget):
 
         self.plot3D_widget = plot3D_widget()
 
-        
+        self.imageAnalysisWidget = imageAnalysisWidget()
         # controller
 
         self.video_saver=VideoSaver()
@@ -65,11 +65,13 @@ class CentralWidget(QtWidgets.QWidget):
 
         
         # VERTICAL LAYOUT ON THE LEFT
-        h_layout = QtGui.QHBoxLayout()
         
         v_left_layout=QtGui.QVBoxLayout()
         v_left_layout.addWidget(self.video_window)
         
+        v_right_layout = QtGui.QVBoxLayout()
+        v_right_layout.addWidget(self.plot3D_widget)
+        v_right_layout.addWidget(self.imageAnalysisWidget)
 #        v_right_layout=QtGui.QVBoxLayout()
 #        v_right_layout.addWidget(self.xplot)
 #        v_right_layout.addWidget(self.yplot)
@@ -78,17 +80,17 @@ class CentralWidget(QtWidgets.QWidget):
 #        v_right_layout.setStretchFactor(self.xplot,1)
 #        v_right_layout.setStretchFactor(self.yplot,1)
 #        v_right_layout.setStretchFactor(self.zplot,1)
-
+        h_layout = QtGui.QHBoxLayout()
         h_layout.addLayout(v_left_layout)
 #        h_layout.addLayout(v_right_layout)
-        h_layout.addWidget(self.plot3D_widget)
+        h_layout.addLayout(v_right_layout)
 
 #        h_layout.addLayout(v_layout)
 #        h_layout.addLayout(plot3D_layout)
         
         h_layout.setStretchFactor(v_left_layout,1)
 #        h_layout.setStretchFactor(v_right_layout,1)
-        h_layout.setStretchFactor(self.plot3D_widget,1)
+        h_layout.setStretchFactor(v_right_layout,1)
         # Final action     
 #        self.setLayout(v_layout)
         self.setLayout(h_layout)
@@ -185,6 +187,10 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.image_to_record.connect(self.add_frame)
         self.video_window.imageName.connect(self.add_name)
 
+        # Image analysis widget connections
+        self.imageAnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
+        self.video_window.roi_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
+        self.video_window.roi_size_signal.connect(self.imageAnalysisWidget.update_size_display)
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

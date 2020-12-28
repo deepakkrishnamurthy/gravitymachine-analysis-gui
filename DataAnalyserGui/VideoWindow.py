@@ -102,8 +102,9 @@ class VideoWindow(QtWidgets.QWidget):
         ## lock the aspect ratio so pixels are always square
         self.graphics_widget.view.setAspectLocked(True)
         ## Create image item
-        self.graphics_widget.img=pg.ImageItem(border='w')
+        self.graphics_widget.img = pg.ImageItem(border='w')
         self.graphics_widget.view.addItem(self.graphics_widget.img)
+
         
         self.playButton = QtGui.QPushButton()
         self.playButton.setEnabled(False)
@@ -133,8 +134,8 @@ class VideoWindow(QtWidgets.QWidget):
         self.roi_size = (100, 100)
 
         self.ROI = pg.CircleROI(self.roi_pos, self.roi_size, scaleSnap = True, translateSnap = True)
-        self.ROI.addScalehandle((0,0),(1,1))
-        self.graphics_widget.addItem(self.ROI)
+        # self.ROI.addScalehandle((0,0),(1,1))
+        self.graphics_widget.view.addItem(self.ROI)
         self.ROI.hide()
         self.ROI.sigRegionChanged.connect(self.updateROI)
         self.roi_pos = self.ROI.pos()
@@ -177,12 +178,12 @@ class VideoWindow(QtWidgets.QWidget):
         roi_width = self.roi_size[0]
         roi_height = self.roi_size[1]
 
-        roi_radius = (self.roi_width + self.roi_height)/2.0
+        roi_radius = (roi_width + roi_height)/2.0
 
         roi_center_x = int(self.roi_pos[0] + roi_width/2.0)
         roi_center_y = int(self.roi_pos[1] + roi_height/2.0)
 
-        self.roi_pos_signal.emit(self.roi_center_x, self.roi_center_y)
+        self.roi_pos_signal.emit(roi_center_x, roi_center_y)
         self.roi_size_signal.emit(int(roi_radius))
 
 
