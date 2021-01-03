@@ -1,21 +1,20 @@
 # -*- coding: utf-8 -*-
-
-
 import sys
 import os
 
 import cv2
 import numpy as np
+import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
-
+# QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
 from CSV_Reader import CSV_Reader
-from plot3D import plot3D
+from plot3D import plot3D_widget
 from VideoWindow import VideoWindow
 from PlotWidget import PlotWidget
 from VideoSaver import VideoSaver
-
+from imageAnalysisWidget import imageAnalysisWidget
 
 from aqua.qsshelper import QSSHelper
 
@@ -32,67 +31,27 @@ class CentralWidget(QtWidgets.QWidget):
    
     def __init__(self):
         super().__init__()
+    
         
-        
-
-        self.video_saver=VideoSaver()
-        self.isImageSaver=False  #True: image_saver will be chose in place of video saver
-        
-        #widgets
+        # widgets
         self.video_window=VideoWindow(PixelPermm = 314)
         self.fps=None #fps for saving
         self.xplot = PlotWidget('X displacement', label = 'X',color ='r')
         self.yplot = PlotWidget('Y displacement', label = 'Y',color ='g')
         self.zplot = PlotWidget('Z displacement', label = 'Z',color =(50, 100, 255))
-        
-        #Tool
+
+        self.plot3D_widget = plot3D_widget()
+
+        self.imageAnalysisWidget = imageAnalysisWidget()
+        # controller
+
+        self.video_saver=VideoSaver()
+        self.isImageSaver=False  #True: image_saver will be chose in place of video saver
+
         self.csv_reader=CSV_Reader(flip_z = False)
         
-        self.plot3D = plot3D()
         
-        self.panVSlider = QtGui.QSlider(QtCore.Qt.Vertical)
-        self.panVSlider.setRange(-400, 400)
-        self.panVSlider.setValue(0)
-        
-        self.panHSlider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.panHSlider.setRange(-200, 200)
-        self.panHSlider.setValue(0)
-        
-        self.home3Dbutton=QtGui.QPushButton()
-        self.home3Dbutton.setFixedSize(20,20)
-        self.home3Dbutton.setIcon(QtGui.QIcon('icon/home.png'))
-
-        plot3D_layout=QtGui.QGridLayout()
-        plot3D_layout.addWidget(self.plot3D,0,0,1,1)
-        plot3D_layout.addWidget(self.panVSlider,0,1,1,1)
-        plot3D_layout.addWidget(self.panHSlider,1,0,1,1)
-        plot3D_layout.addWidget(self.home3Dbutton,1,1,1,1)
-
-
-        
-
-        # self.groupbox_parameters = QtGui.QGroupBox('Track parameters')
-
-        # self.groupbox_parameters.setLayout(h_layout_params)
-
-
-
-
-
-        
-
-        # Create a vertical layout consisting of the video window and 3D plot
-        v_layout = QtGui.QVBoxLayout()
-        # v_layout = QtGui.QGridLayout()
-
-        # v_layout.addWidget(self.video_window, 0,0,1,1)
-        # v_layout.addLayout(self.zplot,0,1,1,1)
-
-        v_layout.addWidget(self.video_window)
-        
-        # v_layout.addWidget(self.groupbox_parameters)
-#        v_layout.addLayout(plot3D_layout)
-        
+    
         #----------------------------------------------------------------------
         # Toggle Comment/Uncomment to turn Z-plot ON and OFF
         #----------------------------------------------------------------------
@@ -107,11 +66,14 @@ class CentralWidget(QtWidgets.QWidget):
 
         
         # VERTICAL LAYOUT ON THE LEFT
-        h_layout = QtGui.QHBoxLayout()
         
         v_left_layout=QtGui.QVBoxLayout()
         v_left_layout.addWidget(self.video_window)
         
+        v_right_layout = QtGui.QVBoxLayout()
+        v_right_layout.addWidget(self.plot3D_widget)
+        # Comment/Uncomment below to remove the image analysis widget
+        v_right_layout.addWidget(self.imageAnalysisWidget)
 #        v_right_layout=QtGui.QVBoxLayout()
 #        v_right_layout.addWidget(self.xplot)
 #        v_right_layout.addWidget(self.yplot)
@@ -120,25 +82,22 @@ class CentralWidget(QtWidgets.QWidget):
 #        v_right_layout.setStretchFactor(self.xplot,1)
 #        v_right_layout.setStretchFactor(self.yplot,1)
 #        v_right_layout.setStretchFactor(self.zplot,1)
-
+        h_layout = QtGui.QHBoxLayout()
         h_layout.addLayout(v_left_layout)
 #        h_layout.addLayout(v_right_layout)
-        h_layout.addLayout(plot3D_layout)
+        h_layout.addLayout(v_right_layout)
 
 #        h_layout.addLayout(v_layout)
 #        h_layout.addLayout(plot3D_layout)
-
         
         h_layout.setStretchFactor(v_left_layout,1)
 #        h_layout.setStretchFactor(v_right_layout,1)
-        h_layout.setStretchFactor(plot3D_layout,1)
+        h_layout.setStretchFactor(v_right_layout,1)
         # Final action     
 #        self.setLayout(v_layout)
         self.setLayout(h_layout)
         
-    def reset_sliders(self,value):
-        self.panHSlider.setValue(0)
-        self.panVSlider.setValue(0)
+    
         
     def update_recording_fps(self,fps):
         self.fps=np.round(fps,2)
@@ -172,7 +131,7 @@ class CentralWidget(QtWidgets.QWidget):
         ploty=self.yplot.export_plot(self.quality)
         plotz=self.zplot.export_plot(self.quality)
         print('try 2')
-        plot3d=self.plot3D.export_plot(self.quality)
+        plot3d=self.plot3D_widget.plot3D.export_plot(self.quality)
         print('koik')
         if self.isImageSaver:
             self.image_saver.register(image_name, img,plotx,ploty,plotz,plot3d)
@@ -192,6 +151,21 @@ class CentralWidget(QtWidgets.QWidget):
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
 
+    def save_analysis_data(self, track_ID, Tmin, Tmax, x_pos, y_pos):
+
+        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/TrackSegments'
+
+        print('Saving analysis file...')
+        print('Tmin', Tmin)
+        print('Tmax', Tmax)
+        print('X centroid', x_pos)
+        print('Y centroid', y_pos)
+        print('track ID', track_ID)
+        # Create a csv file
+        df = pd.DataFrame({'Sphere ID': [track_ID], 'track folder':[self.csv_reader.directory], 'track file':[self.csv_reader.file_name], 'Tmin':[Tmin],'Tmax':[Tmax],'X centroid':[x_pos], 'Y centroid':[y_pos]})
+
+        df.to_csv(os.path.join(save_folder, track_ID+'_'+str(int(Tmin))+'_'+str(int(Tmax)) +'.csv'))
+
     def connect_all(self):
         
         self.csv_reader.Time_data.connect(self.xplot.update_Time)
@@ -203,10 +177,10 @@ class CentralWidget(QtWidgets.QWidget):
         self.csv_reader.Zobjet_data.connect(self.zplot.update_plot)
         self.csv_reader.fps_data.connect(self.update_recording_fps)
         
-        self.csv_reader.Time_data.connect(self.plot3D.update_Time)
-        self.csv_reader.Xobjet_data.connect(self.plot3D.update_X)
-        self.csv_reader.Yobjet_data.connect(self.plot3D.update_Y)
-        self.csv_reader.Zobjet_data.connect(self.plot3D.update_Z)
+        self.csv_reader.Time_data.connect(self.plot3D_widget.plot3D.update_Time)
+        self.csv_reader.Xobjet_data.connect(self.plot3D_widget.plot3D.update_X)
+        self.csv_reader.Yobjet_data.connect(self.plot3D_widget.plot3D.update_Y)
+        self.csv_reader.Zobjet_data.connect(self.plot3D_widget.plot3D.update_Z)
         
         self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
         
@@ -223,16 +197,19 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.update_plot.connect(self.yplot.update_cursor)
         self.video_window.update_plot.connect(self.zplot.update_cursor)
         
-        self.panHSlider.valueChanged.connect(self.plot3D.pan_X)
-        self.panVSlider.valueChanged.connect(self.plot3D.pan_Z)
-        self.home3Dbutton.clicked.connect(self.plot3D.reset_view)
-        self.plot3D.reset_sliders.connect(self.reset_sliders)
-        self.video_window.update_3Dplot.connect(self.plot3D.move_marker)
+       
+        self.video_window.update_3Dplot.connect(self.plot3D_widget.plot3D.move_marker)
         
         self.video_window.record_signal.connect(self.record_change)
         self.video_window.image_to_record.connect(self.add_frame)
         self.video_window.imageName.connect(self.add_name)
 
+        # Image analysis widget connections
+        self.imageAnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
+        self.imageAnalysisWidget.save_analysis_data.connect(self.save_analysis_data)
+
+        self.video_window.roi_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
+        self.video_window.roi_size_signal.connect(self.imageAnalysisWidget.update_size_display)
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -799,7 +776,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.central_widget.video_window.playButton.setEnabled(True)
             self.central_widget.video_window.recordButton.setEnabled(True)
-            self.central_widget.plot3D.reinitialize_plot3D()
+            self.central_widget.plot3D_widget.plot3D.reinitialize_plot3D()
 
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
@@ -813,24 +790,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         
     def save_3Dplot(self):
-        self.central_widget.plot3D.save_plot(quality = 10)
+        self.central_widget.plot3D_widget.plot3D.save_plot(quality = 10)
       
     def options_3Dplot(self):
-        options_dialog = options3D_Dialog(self.central_widget.plot3D.opts['distance'])
-        options_dialog.grid_linewidth.connect(self.central_widget.plot3D.update_grid_linewidth)
-        options_dialog.traj_linewidth.connect(self.central_widget.plot3D.update_traj_linewidth)
-        options_dialog.camera_distance.connect(self.central_widget.plot3D.update_camera_distance)
-        options_dialog.background.connect(self.central_widget.plot3D.update_background)
+        options_dialog = options3D_Dialog(self.central_widget.plot3D_widget.plot3D.opts['distance'])
+        options_dialog.grid_linewidth.connect(self.central_widget.plot3D_widget.plot3D.update_grid_linewidth)
+        options_dialog.traj_linewidth.connect(self.central_widget.plot3D_widget.plot3D.update_traj_linewidth)
+        options_dialog.camera_distance.connect(self.central_widget.plot3D_widget.plot3D.update_camera_distance)
+        options_dialog.background.connect(self.central_widget.plot3D_widget.plot3D.update_background)
         
         options_dialog.exec_()
 
     def options_TrackParams(self):
-        options_dialog_track = optionsTrack_Dialog(width_value = self.central_widget.plot3D.Width, length_value = self.central_widget.plot3D.Length, x_offset_value = self.central_widget.plot3D.x_offset, y_offset_value = self.central_widget.plot3D.y_offset, PixelPermm_value = self.central_widget.video_window.PixelPermm)
+        options_dialog_track = optionsTrack_Dialog(width_value = self.central_widget.plot3D_widget.plot3D.Width, length_value = self.central_widget.plot3D_widget.plot3D.Length, x_offset_value = self.central_widget.plot3D_widget.plot3D.x_offset, y_offset_value = self.central_widget.plot3D_widget.plot3D.y_offset, PixelPermm_value = self.central_widget.video_window.PixelPermm)
         options_dialog_track.pixelpermm.connect(self.central_widget.video_window.update_pixelsize)
-        options_dialog_track.width.connect(self.central_widget.plot3D.update_width)
-        options_dialog_track.length.connect(self.central_widget.plot3D.update_length)
-        options_dialog_track.x_offset.connect(self.central_widget.plot3D.update_x_offset)
-        options_dialog_track.y_offset.connect(self.central_widget.plot3D.update_y_offset)
+        options_dialog_track.width.connect(self.central_widget.plot3D_widget.plot3D.update_width)
+        options_dialog_track.length.connect(self.central_widget.plot3D_widget.plot3D.update_length)
+        options_dialog_track.x_offset.connect(self.central_widget.plot3D_widget.plot3D.update_x_offset)
+        options_dialog_track.y_offset.connect(self.central_widget.plot3D_widget.plot3D.update_y_offset)
         # Update the 2D plots with the offsets
         options_dialog_track.x_offset.connect(self.central_widget.xplot.update_offset)
         options_dialog_track.y_offset.connect(self.central_widget.yplot.update_offset)

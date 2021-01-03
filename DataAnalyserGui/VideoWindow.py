@@ -12,57 +12,7 @@ import cv2 as cv2
 import time as time
 import os
 
-
-font = cv2.FONT_HERSHEY_SIMPLEX
-
-'''
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#                         Image_Widget
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-''' 
-   
-class ImageWidget(pg.GraphicsLayoutWidget):
-    
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.view=self.addViewBox()
-        
-        ## lock the aspect ratio so pixels are always square
-        self.view.setAspectLocked(True)
-        
-        ## Create image item
-        self.img=pg.ImageItem(border='w')
-        self.view.addItem(self.img)
-
-        
-
-        
-#    def refresh_image(self, image_bgr): 
-#
-#        image_gray=cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
-#
-#        image_gray=cv2.rotate(image_gray,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
-#        
-#        clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(6,6))
-#                
-#        image_gray = clahe.apply(image_gray)
-#        
-#        self.img.setImage(image_gray)
-        
-    def refresh_image(self, image): 
-
-
-        image = cv2.rotate(image,cv2.ROTATE_90_CLOCKWISE) #pgItem display the image with 90° anticlockwise rotation
-        self.img.setImage(image)
-
-#    def update_clahe(self):
-#        # Update clahe parameters
-#        self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
-
-
-        
+font = cv2.FONT_HERSHEY_SIMPLEX 
         
 '''
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,11 +27,15 @@ class VideoWindow(QtWidgets.QWidget):
     imageName=QtCore.pyqtSignal(str)
     record_signal=QtCore.pyqtSignal(bool)
     image_to_record=QtCore.pyqtSignal(np.ndarray, str)
+
+    roi_pos_signal = QtCore.pyqtSignal(int, int)
+    roi_size_signal = QtCore.pyqtSignal(int)
     
     def __init__(self, PixelPermm = 314, parent=None):
         super(VideoWindow, self).__init__(parent)
 
         #Video parameters
+        self.image = None
         self.image_directory=''
         # Dictionary containing the subfolder address of all images
         self.image_dict = {}
@@ -138,7 +92,19 @@ class VideoWindow(QtWidgets.QWidget):
         self.playback_speed = 1
         #Gui Component
         
-        self.image_widget=ImageWidget()
+        self.add_components()
+
+    def add_components(self):
+
+        # Widgets
+        self.graphics_widget = pg.GraphicsLayoutWidget()
+        self.graphics_widget.view = self.graphics_widget.addViewBox()
+        ## lock the aspect ratio so pixels are always square
+        self.graphics_widget.view.setAspectLocked(True)
+        ## Create image item
+        self.graphics_widget.img = pg.ImageItem(border='w')
+        self.graphics_widget.view.addItem(self.graphics_widget.img)
+
         
         self.playButton = QtGui.QPushButton()
         self.playButton.setEnabled(False)
@@ -162,7 +128,20 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSpinBox.setSingleStep(0.01)
         self.positionSpinBox.setEnabled(False)
         self.positionSpinBox_prevValue=0
+
+        # Add ROI
+        self.roi_pos = (0.5,0.5)
+        self.roi_size = (100, 100)
+
+        self.ROI = pg.CircleROI(self.roi_pos, self.roi_size, scaleSnap = True, translateSnap = True)
+        # self.ROI.addScalehandle((0,0),(1,1))
+        self.graphics_widget.view.addItem(self.ROI)
+        self.ROI.hide()
+        self.ROI.sigRegionChanged.connect(self.updateROI)
+        self.roi_pos = self.ROI.pos()
+        self.roi_size = self.ROI.size()
         
+        # Connections
         self.positionSlider.valueChanged.connect(self.positionSpinBox_setValue)
         self.positionSpinBox.valueChanged.connect(self.positionSlider_setValue)
 
@@ -175,35 +154,73 @@ class VideoWindow(QtWidgets.QWidget):
         controlLayout.addWidget(self.recordButton)
 
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.image_widget)
+        layout.addWidget(self.graphics_widget)
         layout.addLayout(controlLayout)
 
 
         self.setLayout(layout)
-        
+
+    def updateROI(self):
+        self.roi_pos = self.ROI.pos()
+        self.roi_size = self.ROI.size()
+
+        self.send_roi_data()
+
+    def toggle_ROI_show(self, flag):
+
+        if(flag == True):
+            self.ROI.show()
+        else:
+            self.ROI.hide()
+
+    def send_roi_data(self):
+
+        roi_width = self.roi_size[0]
+        roi_height = self.roi_size[1]
+
+        roi_radius = (roi_width + roi_height)/2.0
+
+        roi_center_x = int(self.roi_pos[0] + roi_width/2.0)
+        roi_center_y = int(self.roi_pos[1] + roi_height/2.0)
+
+        self.roi_pos_signal.emit(roi_center_x, roi_center_y)
+        self.roi_size_signal.emit(int(roi_radius))
+
+
     def refreshImage(self,image_name):
         # Changed so that it can handle images being split among multiple sub-directories.
         file_directory= os.path.join(self.image_directory, self.image_dict[image_name],image_name)
 
         # print(file_directory)
-
-        image = cv2.imread(file_directory)
+        self.image = cv2.imread(file_directory)
         if(self.imW==0 or self.imH ==0 or self.newData==True):
-            self.imH, self.imW,*rest = np.shape(image)
-            print(np.shape(image))
+            self.imH, self.imW,*rest = np.shape(self.image)
+            print(np.shape(self.image))
             print(self.imH, self.imW)
             self.newData = False
             
-        # Apply contrast enhancement
+        self.apply_clahe()
+        self.add_annotation()
+
+        self.image = cv2.rotate(self.image,cv2.ROTATE_90_CLOCKWISE) #pgItem display the self.image with 90° anticlockwise rotation
+        self.graphics_widget.img.setImage(self.image)
+
+        self.imageName.emit(image_name)
+        if self.isRecording:
+            # print('Current Image : {}'.format(image_name))
+            self.image_to_record.emit(self.image, image_name)
+
+    def apply_clahe(self):
+         # Apply contrast enhancement
         if(self.grayscale is True):
-            image_gs = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            image = self.clahe.apply(image_gs)
+            image_gs = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+            self.image = self.clahe.apply(image_gs)
             
         else:
             # Convert from BGR to LAB colorspace
-            image_lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+            image_lab = cv2.cvtColor(self.image, cv2.COLOR_BGR2LAB)
             
-            # Split the LAB image into individual channels
+            # Split the LAB self.image into individual channels
             L,A,B = cv2.split(image_lab)
             
             # Apply CLAHE contrast enhancement 
@@ -211,25 +228,24 @@ class VideoWindow(QtWidgets.QWidget):
         
             image_lab = cv2.merge((CL,A,B))
         
-            image = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
-        
+            self.image = cv2.cvtColor(image_lab, cv2.COLOR_LAB2RGB)
+
+    def add_annotation(self):
+
         if(len(self.Image_Time)!= 0):
             currTime = self.Image_Time[self.current_track_index]
-            
-#            centroid = [int(self.imW/2) + self.Xobj_image[self.current_track_index], int(self.imH/2) - self.Zobj_image[self.current_track_index]]
-            
-          
-#            cv2.circle(image,(centroid[0],centroid[1]), 15, (255,255,255), 3)
-            # print('Current Image Time: {}'.format(currTime))
-            cv2.putText(image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+
+            #            centroid = [int(self.imW/2) + self.Xobj_image[self.current_track_index], int(self.imH/2) - self.Zobj_image[self.current_track_index]]
+
+
+            #            cv2.circle(self.image,(centroid[0],centroid[1]), 15, (255,255,255), 3)
+            # print('Current self.image Time: {}'.format(currTime))
+            cv2.putText(self.image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
 
             # if(LED_intensity>0):
-            #     cv2.putText(image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            #     cv2.putText(self.image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
             # else:
-            #     cv2.putText(image, 'Light OFF', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
-
-
+            #     cv2.putText(self.image, 'Light OFF', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
 
             x_start = self.imW - int((self.scalebarSize/1000)*(self.PixelPermm))-self.scaleBar_offset()
@@ -239,17 +255,9 @@ class VideoWindow(QtWidgets.QWidget):
 
             scaleBar_text_offset = self.scaleBar_text_offset()
 
-            cv2.putText(image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
+            cv2.putText(self.image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
 
-            cv2.line(image, (x_start, y_start), (x_end, y_end), color =(255,255,255), thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
-            
-            
-
-        self.image_widget.refresh_image(image)
-        self.imageName.emit(image_name)
-        if self.isRecording:
-            # print('Current Image : {}'.format(image_name))
-            self.image_to_record.emit(image, image_name)
+            cv2.line(self.image, (x_start, y_start), (x_end, y_end), color =(255,255,255), thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
         
     def initialize_directory(self,directory, image_dict):
         # Making this more robust by passing the actual folder name containing images instead of assuming they are in /images/
@@ -260,20 +268,12 @@ class VideoWindow(QtWidgets.QWidget):
         # This is the dictionary which contains the subdirectory address for all images.
         self.image_dict = image_dict
 
-       
-#    def initialize_image_index(self,image_index):   # Add image index
-#        self.Image_Index = image_index
-        
     def initialize_image_names(self,image_names):
         self.Image_Names=image_names
         
         if len(self.Image_Names)>0:
             self.refreshImage(self.Image_Names[0])
-
-    # def initialize_led_intensity(self, led_intensity):
-    #     self.LED_intensity = led_intensity
-
-        
+ 
     def initialize_image_time(self,image_time):
         self.Image_Time=image_time
         self.positionSlider.setRange(0,len(self.Image_Time)-1)
@@ -305,8 +305,6 @@ class VideoWindow(QtWidgets.QWidget):
         
         print('Initialized object centroids')
         
-        
-        
     def positionSpinBox_setValue(self,value):
         newvalue=self.Image_Time[value]
         self.positionSpinBox.setValue(newvalue)
@@ -328,10 +326,7 @@ class VideoWindow(QtWidgets.QWidget):
             self.refreshImage(self.Image_Names[newvalue])
             self.update_plot.emit(self.Image_Time[newvalue])
             self.update_3Dplot.emit(self.Image_Time[newvalue])
-            
-            
-            
-            
+                
     def find_slider_index(self,value):
         #
         index=0
@@ -357,21 +352,7 @@ class VideoWindow(QtWidgets.QWidget):
             hasToChange=False
             
         return index,hasToChange
-                
-    def update_pixelsize(self, PixelPermm):
-        self.PixelPermm = PixelPermm
-
-    def scaleBar_offset(self):
-        return int(20*self.imW/720)
-
-    def fontScale(self):
-        return max(int(0.75*self.baseFontScale*self.imW/720),1) 
-
-    def timeStampPosition(self):
-        return (int((self.imW/720)*self.timeStampPos_base[0]), int((self.imW/720)*self.timeStampPos_base[1]))
-
-    def scaleBar_text_offset(self):
-        return (int(max((self.imW/1920),0.5)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
+            
            
     def update_playback_speed(self, newvalue):
         self.playback_speed = newvalue
@@ -416,3 +397,18 @@ class VideoWindow(QtWidgets.QWidget):
             self.positionSlider.setValue(self.current_track_index)
             
             self.prev_track_index = self.current_track_index
+
+    def update_pixelsize(self, PixelPermm):
+        self.PixelPermm = PixelPermm
+
+    def scaleBar_offset(self):
+        return int(20*self.imW/720)
+
+    def fontScale(self):
+        return max(int(0.75*self.baseFontScale*self.imW/720),1) 
+
+    def timeStampPosition(self):
+        return (int((self.imW/720)*self.timeStampPos_base[0]), int((self.imW/720)*self.timeStampPos_base[1]))
+
+    def scaleBar_text_offset(self):
+        return (int(max((self.imW/1920),0.5)*self.scaleBar_textOffset_base[0]), int((self.imW/1920)*self.scaleBar_textOffset_base[1]))
