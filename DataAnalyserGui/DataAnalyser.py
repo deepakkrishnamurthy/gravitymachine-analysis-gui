@@ -4,9 +4,10 @@ import os
 
 import cv2
 import numpy as np
+import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
-
+# QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
 from CSV_Reader import CSV_Reader
 from plot3D import plot3D_widget
@@ -71,6 +72,7 @@ class CentralWidget(QtWidgets.QWidget):
         
         v_right_layout = QtGui.QVBoxLayout()
         v_right_layout.addWidget(self.plot3D_widget)
+        # Comment/Uncomment below to remove the image analysis widget
         v_right_layout.addWidget(self.imageAnalysisWidget)
 #        v_right_layout=QtGui.QVBoxLayout()
 #        v_right_layout.addWidget(self.xplot)
@@ -149,6 +151,21 @@ class CentralWidget(QtWidgets.QWidget):
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
 
+    def save_analysis_data(self, track_ID, Tmin, Tmax, x_pos, y_pos):
+
+        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/TrackSegments'
+
+        print('Saving analysis file...')
+        print('Tmin', Tmin)
+        print('Tmax', Tmax)
+        print('X centroid', x_pos)
+        print('Y centroid', y_pos)
+        print('track ID', track_ID)
+        # Create a csv file
+        df = pd.DataFrame({'Sphere ID': [track_ID], 'track folder':[self.csv_reader.directory], 'track file':[self.csv_reader.file_name], 'Tmin':[Tmin],'Tmax':[Tmax],'X centroid':[x_pos], 'Y centroid':[y_pos]})
+
+        df.to_csv(os.path.join(save_folder, track_ID+'_'+str(int(Tmin))+'_'+str(int(Tmax)) +'.csv'))
+
     def connect_all(self):
         
         self.csv_reader.Time_data.connect(self.xplot.update_Time)
@@ -189,6 +206,8 @@ class CentralWidget(QtWidgets.QWidget):
 
         # Image analysis widget connections
         self.imageAnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
+        self.imageAnalysisWidget.save_analysis_data.connect(self.save_analysis_data)
+
         self.video_window.roi_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
         self.video_window.roi_size_signal.connect(self.imageAnalysisWidget.update_size_display)
 

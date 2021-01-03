@@ -59,14 +59,15 @@ class CSV_Reader(QtCore.QObject):
             V.append((X[i+1]-X[i-1])/deltaT)
         
     
-    def open_newCSV(self,directory, trackFile, Tmin = None, Tmax = None):
+    def open_newCSV(self, directory, trackFile, Tmin = None, Tmax = None):
 
         Data=[]
 
         
         self.file_name = trackFile
+        self.directory = directory
 
-        trackPath = os.path.join(directory, self.file_name)
+        trackPath = os.path.join(self.directory, self.file_name)
         
         
         self.df = pd.read_csv(trackPath)
