@@ -151,20 +151,27 @@ class CentralWidget(QtWidgets.QWidget):
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
 
-    def save_analysis_data(self, track_ID, Tmin, Tmax, x_pos, y_pos):
+    def save_analysis_data(self, track_id, object_size):
 
-        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/TrackSegments'
+        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/FeatureTracks'
 
         print('Saving analysis file...')
-        print('Tmin', Tmin)
-        print('Tmax', Tmax)
-        print('X centroid', x_pos)
-        print('Y centroid', y_pos)
-        print('track ID', track_ID)
+     
         # Create a csv file
-        df = pd.DataFrame({'Sphere ID': [track_ID], 'track folder':[self.csv_reader.directory], 'track file':[self.csv_reader.file_name], 'Tmin':[Tmin],'Tmax':[Tmax],'X centroid':[x_pos], 'Y centroid':[y_pos]})
+        tracking_data = pd.DataFrame({'track ID':[], 'track file': [], 'feature ID':[], 'Time':[], 'feature centroid X':[], 'feature centroid Z':[], 'sphere centroid X':[], 'sphere centroid Z':[], 'object diameter (px)':[]})
+        for ii in range(self.video_window.n_features):
+            tracking_data = tracking_data.append(pd.DataFrame({'track ID':np.repeat(track_id, len(self.video_window.centroids_x_array[ii]), axis = 0), 
+                'track file': np.repeat(self.csv_reader.file_name, len(self.video_window.centroids_x_array[ii]), axis = 0),
+                'feature ID':np.repeat(ii, len(self.video_window.centroids_x_array[ii]), axis = 0), 
+                'Time': self.video_window.Timestamp_array, 'feature centroid X': self.video_window.centroids_x_array[ii], 
+                'feature centroid Z': self.video_window.centroids_y_array[ii], 
+                'sphere centroid X': self.video_window.true_centroid_object_X_array, 
+                'sphere centroid Z': self.video_window.true_centroid_object_Z_array, 'object diameter (px)': np.repeat(object_size, len(self.video_window.centroids_x_array[ii]), axis = 0)}))
+        
+        tracking_data.to_csv(os.path.join(save_folder, track_id +'_' + str(int(np.min(self.video_window.Timestamp_array))) + '_' + str(int(np.max(self.video_window.Timestamp_array)))+'.csv'))
 
-        df.to_csv(os.path.join(save_folder, track_ID+'_'+str(int(Tmin))+'_'+str(int(Tmax)) +'.csv'))
+        self.video_window.initialize_track_variables()
+
 
     def connect_all(self):
         
@@ -205,11 +212,16 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.imageName.connect(self.add_name)
 
         # Image analysis widget connections
-        self.imageAnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
-        self.imageAnalysisWidget.save_analysis_data.connect(self.save_analysis_data)
+        self.imageAnalysisWidget.show_circular_roi.connect(self.video_window.toggle_ROI_circle)
+        self.imageAnalysisWidget.show_object_roi.connect(self.video_window.toggle_ROI_object)
+        self.imageAnalysisWidget.show_feature_roi.connect(self.video_window.toggle_ROI)
 
-        self.video_window.roi_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
-        self.video_window.roi_size_signal.connect(self.imageAnalysisWidget.update_size_display)
+        self.imageAnalysisWidget.save_signal.connect(self.save_analysis_data)
+
+        self.imageAnalysisWidget.track_signal.connect(self.video_window.toggle_tracking)
+
+        self.video_window.roi_circle_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
+        self.video_window.roi_circle_size_signal.connect(self.imageAnalysisWidget.update_size_display)
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

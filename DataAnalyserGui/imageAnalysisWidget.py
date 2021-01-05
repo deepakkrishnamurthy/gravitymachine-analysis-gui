@@ -7,8 +7,11 @@ import pyqtgraph as pg
 
 class imageAnalysisWidget(QtWidgets.QWidget):
 
-	show_roi = QtCore.pyqtSignal(bool)
-	save_analysis_data = QtCore.pyqtSignal(str, float, float, int, int)
+	show_circular_roi = QtCore.pyqtSignal(bool)
+	show_object_roi = QtCore.pyqtSignal(bool)
+	show_feature_roi = QtCore.pyqtSignal(bool)
+	track_signal = QtCore.pyqtSignal(bool)
+	save_signal = QtCore.pyqtSignal(str, int)
 
 	def __init__(self):
 		super().__init__()
@@ -18,27 +21,39 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 
 		# Widget
 		# Button to show or hide the ROI
-		self.roi_button = QtGui.QPushButton('Show ROI')
+		self.circular_roi_button = QtGui.QPushButton('Show circle ROI')
+		self.circular_roi_button.setCheckable(True)
+		self.circular_roi_button.setChecked(False)
+		self.circular_roi_button.setEnabled(True)
 
-		self.roi_button.setCheckable(True)
-		self.roi_button.setChecked(False)
-		self.roi_button.setEnabled(True)
+		# Show/Hide object ROI button
+		self.object_roi_button = QtGui.QPushButton('Select object')
+		self.object_roi_button.setCheckable(True)
+		self.object_roi_button.setChecked(False)
+		self.object_roi_button.setEnabled(True)
+		# Show/Hide feature ROIs button
 
-		# Button to save the analysis parameters
-		self.save_button = QtGui.QPushButton('Save analysis params')
-		self.save_button.setChecked(False)
-		self.save_button.setEnabled(True)
+		self.feature_roi_button = QtGui.QPushButton('Select features')
+		self.feature_roi_button.setCheckable(True)
+		self.feature_roi_button.setChecked(False)
+		self.feature_roi_button.setEnabled(True)
+
+		# Start/Stop tracking button
+		self.track_button = QtGui.QPushButton('Start tracking')
+		self.track_button.setCheckable(True)
+		self.track_button.setChecked(False)
+		self.track_button.setEnabled(True)
+
+		# Save tracking data to File button
+		self.save_data_button = QtGui.QPushButton('Save data')
+		self.save_data_button.setCheckable(False)
+		self.save_data_button.setEnabled(True)
+
 
 		# Entry label for Sphere/Organism ID
 		self.track_ID_label = QtGui.QLabel('track ID')
 		self.track_ID = QtGui.QLineEdit()
 
-		self.Tmin_label = QtGui.QLabel('T min')
-		self.Tmax_label = QtGui.QLabel('T max')
-		self.Tmin = QtGui.QLineEdit()
-		self.Tmax = QtGui.QLineEdit()
-		self.Tmin.setValidator(QtGui.QDoubleValidator(0.00,10000.00,2))
-		self.Tmax.setValidator(QtGui.QDoubleValidator(0.00,10000.00,2))
 
 		# Labels to display the position at of the ROI center
 		self.x_pos_label = QtGui.QLabel('X centroid')
@@ -51,15 +66,18 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 		self.y_pos_value.setNum(0)
 
 		# ROI size
-		self.size_label = QtGui.QLabel('ROI radius')
+		self.size_label = QtGui.QLabel('Object size (px)')
 
 		self.size_value = QtGui.QLabel()
 		self.size_value.setNum(0)
 
-		# Connection
+		# Connections
 
-		self.roi_button.clicked.connect(self.handle_roi_button)
-		self.save_button.clicked.connect(self.handle_save_button)
+		self.circular_roi_button.clicked.connect(self.handle_circular_roi_button)
+		self.object_roi_button.clicked.connect(self.handle_object_roi_button)
+		self.feature_roi_button.clicked.connect(self.handle_feature_roi_button)
+		self.track_button.clicked.connect(self.handle_track_button)
+		self.save_data_button.clicked.connect(self.handle_save_button)
 
 
 		# Layout
@@ -75,32 +93,48 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 		overall_layout = QtGui.QGridLayout()
 		overall_layout.addWidget(self.track_ID_label,0,0)
 		overall_layout.addWidget(self.track_ID,0,1)
-		overall_layout.addWidget(self.Tmin_label,1,0)
-		overall_layout.addWidget(self.Tmin,1,1)
-		overall_layout.addWidget(self.Tmax_label,2,0)
-		overall_layout.addWidget(self.Tmax,2,1)
-		overall_layout.addLayout(pos_grid_layout,3,0,1,2)
-		overall_layout.addWidget(self.roi_button,4,0)
-		overall_layout.addWidget(self.save_button,4,1)
-
-
+		overall_layout.addLayout(pos_grid_layout,1,0,1,2)
+		overall_layout.addWidget(self.circular_roi_button,2,0)
+		overall_layout.addWidget(self.object_roi_button,2,1)
+		overall_layout.addWidget(self.feature_roi_button,3,0)
+		overall_layout.addWidget(self.track_button,3,1)
+		overall_layout.addWidget(self.save_data_button,4,0)
 		self.setLayout(overall_layout)
 
-	def handle_roi_button(self):
+	def handle_circular_roi_button(self):
 
-		if(self.roi_button.isChecked()):
-			self.show_roi.emit(True)
+		if(self.circular_roi_button.isChecked()):
+			self.show_circular_roi.emit(True)
 			print('Send show roi signal')
 		else:
-			self.show_roi.emit(False)
+			self.show_circular_roi.emit(False)
 			print('Sent hide roi signal')
 
-	def handle_save_button(self):
+	def handle_object_roi_button(self):
 
-		Tmin = float(self.Tmin.text())
-		Tmax = float(self.Tmax.text())
-		track_ID = self.track_ID.text()
-		self.save_analysis_data.emit(track_ID, Tmin, Tmax, int(self.x_pos_value.text()), int(self.y_pos_value.text())) 
+		if(self.object_roi_button.isChecked()):
+			self.show_object_roi.emit(True)
+		else:
+			self.show_object_roi.emit(False)
+
+	def handle_feature_roi_button(self):
+
+		if(self.feature_roi_button.isChecked()):
+			self.show_feature_roi.emit(True)
+		else:
+			self.show_feature_roi.emit(False)
+
+	def handle_track_button(self):
+
+		if(self.track_button.isChecked()):
+			self.track_signal.emit(True)
+			self.save_data_button.setEnabled(False)
+		else:
+			self.track_signal.emit(False)
+			self.save_data_button.setEnabled(True)
+
+	def handle_save_button(self):
+		self.save_signal.emit(self.track_ID.text(), int(self.size_value.text()))
 
 	def update_pos_display(self, xpos, ypos):
 
@@ -109,6 +143,42 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 
 	def update_size_display(self, size):
 		self.size_value.setNum(size)
+
+
+class trackingWidget(QtWidgets.QWidget):
+
+	def __init__(self):
+		super().__init__()
+		self.add_components()
+
+	def add_components(self):
+
+		# Show/Hide object ROI button
+		self.object_roi_button = QtGui.QPushButton('Select object')
+		self.object_roi_button.setCheckable(True)
+		self.object_roi_button.setChecked(False)
+		self.object_roi_button.setEnabled(True)
+		# Show/Hide feature ROIs button
+
+		self.feature_roi_button = QtGui.QPushButton('Select features')
+		self.feature_roi_button.setCheckable(True)
+		self.feature_roi_button.setChecked(False)
+		self.feature_roi_button.setEnabled(True)
+
+		# Start/Stop tracking button
+		self.tracking_button = QtGui.QPushButton('Start tracking')
+		self.tracking_button.setCheckable(True)
+		self.tracking_button.setChecked(False)
+		self.tracking_button.setEnabled(True)
+
+		# Save tracking data to File button
+		self.save_data_button = QtGui.QPushButton('Start tracking')
+		self.save_data_button.setCheckable(False)
+		self.save_data_button.setEnabled(True)
+
+		# Connections
+
+		# Layout
 
 
 
