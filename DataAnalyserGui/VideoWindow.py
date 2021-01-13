@@ -27,7 +27,7 @@ class VideoWindow(QtWidgets.QWidget):
     imageName=QtCore.pyqtSignal(str)
     record_signal=QtCore.pyqtSignal(bool)
     image_to_record=QtCore.pyqtSignal(np.ndarray, str)
-
+    image_signal = QtCore.pyqtSignal(np.ndarray, str)
     roi_circle_pos_signal = QtCore.pyqtSignal(int, int)
     roi_circle_size_signal = QtCore.pyqtSignal(int)
     
@@ -57,7 +57,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.grayscale = True
         # Image contrast settings
         # Contrast factor for image
-        self.clahe_cliplimit = 8
+        self.clahe_cliplimit = 2
 
         # Create a CLAHE object 
         self.clahe = cv2.createCLAHE(clipLimit = self.clahe_cliplimit, tileGridSize = (6,6))
@@ -75,6 +75,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.scaleBar_textOffset_base = (220,25)
 
         self.newData = True
+        self.save_images_flag = False
 
         
         self.timer=QtCore.QTimer()
@@ -102,6 +103,8 @@ class VideoWindow(QtWidgets.QWidget):
         self.tracking_data = None
         
         self.add_components()
+
+
 
     def add_components(self):
 
@@ -178,6 +181,8 @@ class VideoWindow(QtWidgets.QWidget):
             print(np.shape(self.image))
             print(self.imH, self.imW)
             self.newData = False
+            self.current_track_index = 0
+
             
         self.apply_clahe()
         self.image_raw = np.copy(self.image)    # Store a copy of the raw image
@@ -185,8 +190,13 @@ class VideoWindow(QtWidgets.QWidget):
         # Run the tracking if run_tracking_flag is true\
         if(self.tracking_flag == True):
             self.track()
+            self.image_files.append(os.path.join(self.image_dict[image_name], image_name))
+            if(self.save_images_flag):
+                cropped_image = self.image[int(self.bbox_object[1]):int(self.bbox_object[1]+self.bbox_object[3]), int(self.bbox_object[0]):int(self.bbox_object[0]+self.bbox_object[2])]
+                self.image_signal.emit(cropped_image, image_name)
+                print('Sent image for saving')
         else:
-            pass
+           pass
 
         self.add_annotation()
 
@@ -221,6 +231,7 @@ class VideoWindow(QtWidgets.QWidget):
     def add_annotation(self):
 
         if(len(self.Image_Time)!= 0):
+            print(self.current_track_index)
             currTime = self.Image_Time[self.current_track_index]
 
             #            centroid = [int(self.imW/2) + self.Xobj_image[self.current_track_index], int(self.imH/2) - self.Zobj_image[self.current_track_index]]
@@ -417,7 +428,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.ROI = {}
         self.roi_size = (50,50)
 
-        self.roi_pos = [((1 + ii)/self.n_features*self.imW/2 , (1+ii)/self.n_features*self.imH/2) for ii in range(self.n_features)] 
+        self.roi_pos = [(self.imW/2 , self.imH/2) for ii in range(self.n_features)] 
         for index in range(self.n_features):
         
             self.ROI[index] = pg.ROI(self.roi_pos[index], self.roi_size, scaleSnap=True, translateSnap=True, pen = 'r')
@@ -495,7 +506,7 @@ class VideoWindow(QtWidgets.QWidget):
         roi_center_y = int(self.roi_circle_pos[1] + roi_height/2.0)
 
         self.true_centroid_object_X, self.true_centroid_object_Z = roi_center_x, roi_center_y
-
+        
         self.roi_circle_pos_signal.emit(roi_center_x, roi_center_y)
         self.roi_circle_size_signal.emit(int(roi_radius))
     #------------------------------------------------------------------------------------------------------------------------------------
@@ -511,15 +522,18 @@ class VideoWindow(QtWidgets.QWidget):
         self.centroids = {}
         self.centroids_x_array = {}
         self.centroids_y_array = {}
-        self.image_names = []
+        self.image_files = []
         self.true_centroid_object_X = None
         self.true_centroid_object_Z = None
         self.true_centroid_object_X_array = []
         self.true_centroid_object_Z_array = []
         self.bbox_object = None
+        self.bbox_object_x = []
+        self.bbox_object_z = []
         self.bbox_object_init = None
         self.centroids_object_curr = None
         self.centroids_object_prev = None
+
 
 
         self.add_object_tracker()
@@ -530,8 +544,11 @@ class VideoWindow(QtWidgets.QWidget):
 
         if(flag == True):
             # Start tracking
+            self.initialize_track_variables()
             self.tracking_data_available = False
             self.tracking_data = None
+            self.update_ROI()
+            self.update_ROI_circle()
             self.initialize_object_tracker()
             self.initialize_feature_tracker()
             self.tracking_flag = True
@@ -547,6 +564,11 @@ class VideoWindow(QtWidgets.QWidget):
             # Tracking data available flag
             if(self.tracking_data is not None):
                 self.tracking_data_available = True
+    
+    def toggle_save_images(self, flag):
+        self.save_images_flag = flag
+        print('Set save images flag to {}'.format(flag))
+
 
     def add_new_dict_entry(self, track_id):
     
@@ -588,14 +610,19 @@ class VideoWindow(QtWidgets.QWidget):
         y_pos_object = self.bbox_object_init[1] + self.bbox_object_init[3]/2
         self.centroid_object_curr = np.array([x_pos_object, y_pos_object])
 
+        
+
     def initialize_feature_tracker(self):
         # Choose the initial bounding boxes to start the tracking
         for ii in range(self.n_features):
 
             print('bbox {} chosen as {}'.format(ii, self.bbox_init[ii]))
-            
              # Initialize tracker with first frame and bounding box
             self.tracker_flag[ii] = self.tracker_instance[ii].init(self.image_raw, self.bbox_init[ii])
+
+            x_pos_feature = self.bbox_init[ii][0] + self.bbox_init[ii][2]/2
+            y_pos_feature = self.bbox_init[ii][1] + self.bbox_init[ii][3]/2
+
 
     def track(self):
 
@@ -626,9 +653,13 @@ class VideoWindow(QtWidgets.QWidget):
             
             self.true_centroid_object_X += centroid_object_disp[0]
             self.true_centroid_object_Z += centroid_object_disp[1]
+
             
             self.true_centroid_object_X_array.append(self.true_centroid_object_X)
             self.true_centroid_object_Z_array.append(self.true_centroid_object_Z)
+
+            self.bbox_object_x.append(int(self.bbox_object[0]))
+            self.bbox_object_z.append(int(self.bbox_object[1]))
             
             p1 = (int(self.bbox_object[0]), int(self.bbox_object[1]))
             p2 = (int(self.bbox_object[0] + self.bbox_object[2]), int(self.bbox_object[1] + self.bbox_object[3]))
@@ -649,6 +680,7 @@ class VideoWindow(QtWidgets.QWidget):
                 self.centroids[ii] = (x_pos, y_pos)
                 self.centroids_x_array[ii].append(x_pos)
                 self.centroids_y_array[ii].append(y_pos)
+
                 
                 p1 = (int(self.bbox[ii][0]), int(self.bbox[ii][1]))
                 p2 = (int(self.bbox[ii][0] + self.bbox[ii][2]), int(self.bbox[ii][1] + self.bbox[ii][3]))

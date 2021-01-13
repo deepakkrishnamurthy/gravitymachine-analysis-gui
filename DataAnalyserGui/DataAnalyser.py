@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
-# QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
 from CSV_Reader import CSV_Reader
 from plot3D import plot3D_widget
@@ -153,7 +153,7 @@ class CentralWidget(QtWidgets.QWidget):
 
     def save_analysis_data(self, track_id, object_size):
 
-        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/FeatureTracks'
+        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/FeatureTracks_Final'
 
         print('Saving analysis file...')
      
@@ -166,12 +166,21 @@ class CentralWidget(QtWidgets.QWidget):
                 'Time': self.video_window.Timestamp_array, 'feature centroid X': self.video_window.centroids_x_array[ii], 
                 'feature centroid Z': self.video_window.centroids_y_array[ii], 
                 'sphere centroid X': self.video_window.true_centroid_object_X_array, 
-                'sphere centroid Z': self.video_window.true_centroid_object_Z_array, 'object diameter (px)': np.repeat(object_size, len(self.video_window.centroids_x_array[ii]), axis = 0)}))
+                'sphere centroid Z': self.video_window.true_centroid_object_Z_array, 
+                'object bbox X': self.video_window.bbox_object_x ,
+                'object bbox Z': self.video_window.bbox_object_z,
+                'object diameter (px)': np.repeat(object_size, len(self.video_window.centroids_x_array[ii]), axis = 0), 
+                'image file': self.video_window.image_files}))
         
         tracking_data.to_csv(os.path.join(save_folder, track_id +'_' + str(int(np.min(self.video_window.Timestamp_array))) + '_' + str(int(np.max(self.video_window.Timestamp_array)))+'.csv'))
 
         self.video_window.initialize_track_variables()
 
+    def save_images(self, image, image_name):
+        self.image_save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/AnnotatedImages'
+
+        cv2.imwrite(os.path.join(self.image_save_folder, image_name), image)
+        print('Wrote image {} to disk'.format(image_name))
 
     def connect_all(self):
         
@@ -217,12 +226,13 @@ class CentralWidget(QtWidgets.QWidget):
         self.imageAnalysisWidget.show_feature_roi.connect(self.video_window.toggle_ROI)
 
         self.imageAnalysisWidget.save_signal.connect(self.save_analysis_data)
-
+        self.imageAnalysisWidget.save_images_signal.connect(self.video_window.toggle_save_images)
         self.imageAnalysisWidget.track_signal.connect(self.video_window.toggle_tracking)
 
         self.video_window.roi_circle_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
         self.video_window.roi_circle_size_signal.connect(self.imageAnalysisWidget.update_size_display)
 
+        self.video_window.image_signal.connect(self.save_images)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #                   Window for Track parameters
