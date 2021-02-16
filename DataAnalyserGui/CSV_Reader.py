@@ -106,7 +106,7 @@ class CSV_Reader(QtCore.QObject):
         if('Zobj' in self.ColumnNames):
             self.Zobj_image = np.array(self.df['Zobj'])  
             
-        self.Xobj_image, self.Zobj_image = (np.array(self.pixelPermm*self.Xobj_image, dtype = 'int'), np.array(self.pixelPermm*self.Zobj_image, dtype='int'))
+#        self.Xobj_image, self.Zobj_image = (np.array(self.Xobj_image, dtype = 'int'), np.array(self.Zobj_image, dtype='int'))
 
          
         self.ZobjWheel =  np.array(self.df['ZobjWheel'])
