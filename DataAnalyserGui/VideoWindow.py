@@ -101,6 +101,8 @@ class VideoWindow(QtWidgets.QWidget):
         self.tacking_init_flag = False
         self.tracking_data_available = False
         self.tracking_data = None
+        self.track_obj_flag = False
+        self.track_features_flag = False
         
         self.add_components()
 
@@ -518,11 +520,13 @@ class VideoWindow(QtWidgets.QWidget):
         self.bbox = {}
         self.bbox_init = {}
         self.tracker_instance = {}
-        self.tracker_flag = {}
+        self.feature_tracker_ok = {}
+#       
         self.centroids = {}
         self.centroids_x_array = {}
         self.centroids_y_array = {}
         self.image_files = []
+        self.track_indices = []
         self.true_centroid_object_X = None
         self.true_centroid_object_Z = None
         self.true_centroid_object_X_array = []
@@ -534,23 +538,23 @@ class VideoWindow(QtWidgets.QWidget):
         self.centroids_object_curr = None
         self.centroids_object_prev = None
 
-
-
         self.add_object_tracker()
         for ii in self.track_ids:    # Allocate dicts to store the tracks
             self.add_new_dict_entry(ii)
 
     def toggle_tracking(self, flag):
 
-        if(flag == True):
+        if(flag == True and (self.track_obj_flag or self.track_features_flag)):
             # Start tracking
             self.initialize_track_variables()
             self.tracking_data_available = False
             self.tracking_data = None
             self.update_ROI()
             self.update_ROI_circle()
-            self.initialize_object_tracker()
-            self.initialize_feature_tracker()
+            if(self.track_obj_flag):
+                self.initialize_object_tracker()
+            if(self.track_features_flag):
+                self.initialize_feature_tracker()
             self.tracking_flag = True
             self.real_time = False  # Disable real-time playing since we may want to skip frames for tracking 
             # Start the timer
@@ -568,7 +572,14 @@ class VideoWindow(QtWidgets.QWidget):
     def toggle_save_images(self, flag):
         self.save_images_flag = flag
         print('Set save images flag to {}'.format(flag))
-
+    
+    def update_track_object_flag(self, flag):
+        self.track_obj_flag = flag
+        print('Set track object flag to {}'.format(self.track_obj_flag))
+    
+    def update_track_features_flag(self, flag):
+        self.track_features_flag = flag
+        print('Set track features flag to {}'.format(self.track_features_flag))
 
     def add_new_dict_entry(self, track_id):
     
@@ -591,7 +602,7 @@ class VideoWindow(QtWidgets.QWidget):
         if self.tracker_type_feature == "CSRT":
             self.tracker_instance[track_id] = cv2.TrackerCSRT_create()
             
-        self.tracker_flag[track_id] = 0
+        self.feature_tracker_ok[track_id] = 0
         self.centroids [track_id] = []
         self.centroids_x_array[track_id] = []
         self.centroids_y_array[track_id] = []
@@ -599,13 +610,13 @@ class VideoWindow(QtWidgets.QWidget):
     def add_object_tracker(self):
         # Create a separate tracker for detecting the centroid of the sphere
         self.tracker_object = cv2.TrackerKCF_create()
-        self.tracker_object_flag = None
+        self.object_tracker_ok = None
         # self.bbox_object = None
         # self.bbox_object_init = None
 
     def initialize_object_tracker(self):
         
-        self.tracker_object_flag = self.tracker_object.init(self.image_raw, self.bbox_object_init)
+        self.object_tracker_ok = self.tracker_object.init(self.image_raw, self.bbox_object_init)
         x_pos_object = self.bbox_object_init[0] + self.bbox_object_init[2]/2
         y_pos_object = self.bbox_object_init[1] + self.bbox_object_init[3]/2
         self.centroid_object_curr = np.array([x_pos_object, y_pos_object])
@@ -618,7 +629,7 @@ class VideoWindow(QtWidgets.QWidget):
 
             print('bbox {} chosen as {}'.format(ii, self.bbox_init[ii]))
              # Initialize tracker with first frame and bounding box
-            self.tracker_flag[ii] = self.tracker_instance[ii].init(self.image_raw, self.bbox_init[ii])
+            self.feature_tracker_ok[ii] = self.tracker_instance[ii].init(self.image_raw, self.bbox_init[ii])
 
             x_pos_feature = self.bbox_init[ii][0] + self.bbox_init[ii][2]/2
             y_pos_feature = self.bbox_init[ii][1] + self.bbox_init[ii][3]/2
@@ -627,72 +638,80 @@ class VideoWindow(QtWidgets.QWidget):
     def track(self):
 
         self.curr_time = self.Image_Time[self.current_track_index]
-
-        self.Timestamp_array.append(self.curr_time)
-
-        # Update the tracker for the whole sphere
-        self.tracker_object_flag, self.bbox_object = self.tracker_object.update(self.image_raw)
-    
-        # Update tracker
-        for ii in self.track_ids:
-            self.tracker_flag[ii], self.bbox[ii] = self.tracker_instance[ii].update(self.image_raw)
-
-        if(self.tracker_object_flag):
-        # Sphere center successfully tracked
         
-            self.centroid_object_prev =  self.centroid_object_curr
-            x_pos_sphere = self.bbox_object[0] + self.bbox_object[2]/2
-            y_pos_sphere = self.bbox_object[1] + self.bbox_object[3]/2
-            self.centroid_object_curr = np.array([x_pos_sphere, y_pos_sphere])
+        # Store the track index for the current time point
+        self.track_indices.append(self.current_track_index)
+        
+        self.Timestamp_array.append(self.curr_time)
+        
+        if(self.track_obj_flag == True):
+            # Update the tracker for the whole sphere
+            self.object_tracker_ok, self.bbox_object = self.tracker_object.update(self.image_raw)
             
-            print('Detected object centroid: {}'.format(self.centroid_object_curr))
-
-            centroid_object_disp = self.centroid_object_curr - self.centroid_object_prev
-            
-            print('Object disp vector: {}'.format(centroid_object_disp))
-            
-            self.true_centroid_object_X += centroid_object_disp[0]
-            self.true_centroid_object_Z += centroid_object_disp[1]
-
-            
-            self.true_centroid_object_X_array.append(self.true_centroid_object_X)
-            self.true_centroid_object_Z_array.append(self.true_centroid_object_Z)
-
-            self.bbox_object_x.append(int(self.bbox_object[0]))
-            self.bbox_object_z.append(int(self.bbox_object[1]))
-            
-            p1 = (int(self.bbox_object[0]), int(self.bbox_object[1]))
-            p2 = (int(self.bbox_object[0] + self.bbox_object[2]), int(self.bbox_object[1] + self.bbox_object[3]))
-            cv2.rectangle(self.image, p1, p2, (255,255,255), 3, 2)
-            print(p1, p2)
-            print('Tracking whole sphere succesfully')
-        else:
-            print('Warning: Failure detected in tracking of whole sphere...')
-
-        for jj, ii in enumerate(self.track_ids):
-        # Draw bounding box
-            if self.tracker_flag[ii]:
-                # Tracking success
-                  # Calculate the center of the bounding box and store it
-            
-                x_pos = self.bbox[ii][0] + self.bbox[ii][2]/2
-                y_pos = self.bbox[ii][1] + self.bbox[ii][3]/2
-                self.centroids[ii] = (x_pos, y_pos)
-                self.centroids_x_array[ii].append(x_pos)
-                self.centroids_y_array[ii].append(y_pos)
-
+            if(self.object_tracker_ok):
+                # Sphere center successfully tracked
+                self.centroid_object_prev =  self.centroid_object_curr
+                x_pos_sphere = self.bbox_object[0] + self.bbox_object[2]/2
+                y_pos_sphere = self.bbox_object[1] + self.bbox_object[3]/2
+                self.centroid_object_curr = np.array([x_pos_sphere, y_pos_sphere])
                 
-                p1 = (int(self.bbox[ii][0]), int(self.bbox[ii][1]))
-                p2 = (int(self.bbox[ii][0] + self.bbox[ii][2]), int(self.bbox[ii][1] + self.bbox[ii][3]))
+                print('Detected object centroid: {}'.format(self.centroid_object_curr))
+    
+                centroid_object_disp = self.centroid_object_curr - self.centroid_object_prev
+                
+                print('Object disp vector: {}'.format(centroid_object_disp))
+                
+                self.true_centroid_object_X += centroid_object_disp[0]
+                self.true_centroid_object_Z += centroid_object_disp[1]
+    
+                # Centroid relative image origin
+#                self.true_centroid_object_X_array.append(self.true_centroid_object_X)
+#                self.true_centroid_object_Z_array.append(self.true_centroid_object_Z)
+                
+                # centroid relative to image center
+                self.true_centroid_object_X_array.append(self.true_centroid_object_X - self.imW/2)
+                self.true_centroid_object_Z_array.append(self.imH/2 -self.true_centroid_object_Z)  # Flipped because image origin is Top, left. Whereas Gravity Machine convention Z is increasing in upwards direction.
+    
+                self.bbox_object_x.append(int(self.bbox_object[0]))
+                self.bbox_object_z.append(int(self.bbox_object[1]))
+                
+                p1 = (int(self.bbox_object[0]), int(self.bbox_object[1]))
+                p2 = (int(self.bbox_object[0] + self.bbox_object[2]), int(self.bbox_object[1] + self.bbox_object[3]))
+                cv2.rectangle(self.image, p1, p2, (255,255,255), 3, 2)
+                print(p1, p2)
+                print('Tracking whole sphere succesfully')
+            else:
+                print('Warning: Failure detected in tracking of whole sphere...')
+        
+        if(self.track_features_flag == True):
+            # Update tracker
+            for ii in self.track_ids:
+                self.feature_tracker_ok[ii], self.bbox[ii] = self.tracker_instance[ii].update(self.image_raw)
 
-                # print('Tracked bbox for feature {}: {}'.format(ii, self.bbox[ii]))
-
-                cv2.rectangle(self.image, p1, p2, (255,255,255), 2, 1)
-                print('Tracking # {} succesfully'.format(ii))
-            else :
-                # Tracking failure
-                print('Tracking failure for feature: {}'.format(ii))
-                pass
+            for jj, ii in enumerate(self.track_ids):
+            # Draw bounding box
+                if self.feature_tracker_ok[ii]:
+                    # Tracking success
+                      # Calculate the center of the bounding box and store it
+                
+                    x_pos = self.bbox[ii][0] + self.bbox[ii][2]/2
+                    y_pos = self.bbox[ii][1] + self.bbox[ii][3]/2
+                    self.centroids[ii] = (x_pos, y_pos)
+                    self.centroids_x_array[ii].append(x_pos)
+                    self.centroids_y_array[ii].append(y_pos)
+    
+                    
+                    p1 = (int(self.bbox[ii][0]), int(self.bbox[ii][1]))
+                    p2 = (int(self.bbox[ii][0] + self.bbox[ii][2]), int(self.bbox[ii][1] + self.bbox[ii][3]))
+    
+                    # print('Tracked bbox for feature {}: {}'.format(ii, self.bbox[ii]))
+    
+                    cv2.rectangle(self.image, p1, p2, (255,255,255), 2, 1)
+                    print('Tracking # {} succesfully'.format(ii))
+                else :
+                    # Tracking failure
+                    print('Tracking failure for feature: {}'.format(ii))
+                    pass
                 # cv2.putText(image, "Tracking failure detected for {}".format(ii), (100+20*jj,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(255,255,255),2)
                 
                 # # Show the last detected bbox on the image

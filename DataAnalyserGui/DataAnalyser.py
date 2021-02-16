@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
-QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+#QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
 from CSV_Reader import CSV_Reader
 from plot3D import plot3D_widget
@@ -49,22 +49,15 @@ class CentralWidget(QtWidgets.QWidget):
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
 
         self.csv_reader=CSV_Reader(flip_z = False)
-        
-        
-    
         #----------------------------------------------------------------------
         # Toggle Comment/Uncomment to turn Z-plot ON and OFF
         #----------------------------------------------------------------------
 #        v_layout.addWidget(self.zplot)
-
-
         # v_layout.addWidget(self.video_window)
         # v_layout.addLayout(plot3D_layout)
 
         # v_layout.setStretchFactor(plot3D_layout,0.5)
   
-
-        
         # VERTICAL LAYOUT ON THE LEFT
         
         v_left_layout=QtGui.QVBoxLayout()
@@ -175,6 +168,33 @@ class CentralWidget(QtWidgets.QWidget):
         tracking_data.to_csv(os.path.join(save_folder, track_id +'_' + str(int(np.min(self.video_window.Timestamp_array))) + '_' + str(int(np.max(self.video_window.Timestamp_array)))+'.csv'))
 
         self.video_window.initialize_track_variables()
+        
+    def save_translation_analysis_data(self, track_id, object_size):
+
+        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/TranslationAnalysis/AggregateCentroidTracks'
+
+        print('Saving analysis file...')
+     
+        # Create a csv file
+        tracking_data = pd.DataFrame({})
+        
+        tracking_data = tracking_data.append(pd.DataFrame({'track ID':np.repeat(track_id, len(self.video_window.true_centroid_object_X_array), axis = 0), 
+            'track file': np.repeat(self.csv_reader.file_name, len(self.video_window.true_centroid_object_X_array), axis = 0),
+            'Time': self.video_window.Timestamp_array, 
+            'sphere centroid X': self.video_window.true_centroid_object_X_array, 
+            'sphere centroid Z': self.video_window.true_centroid_object_Z_array, 
+            'object bbox X': self.video_window.bbox_object_x ,
+            'object bbox Z': self.video_window.bbox_object_z,
+            'object diameter (px)': np.repeat(object_size, len(self.video_window.true_centroid_object_X_array), axis = 0), 
+            'image file': self.video_window.image_files,
+            'Xobj': self.csv_reader.Xobjet[self.video_window.track_indices],
+            'ZobjWheel': self.csv_reader.ZobjWheel[self.video_window.track_indices],
+            'Xobj_image': self.csv_reader.Xobj_image[self.video_window.track_indices], 
+            'Zobj_image': self.csv_reader.Zobj_image[self.video_window.track_indices]}))
+        
+        tracking_data.to_csv(os.path.join(save_folder, track_id +'_' + str(int(np.min(self.video_window.Timestamp_array))) + '_' + str(int(np.max(self.video_window.Timestamp_array)))+'.csv'))
+
+        self.video_window.initialize_track_variables()
 
     def save_images(self, image, image_name):
         self.image_save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/AnnotatedImages'
@@ -225,9 +245,14 @@ class CentralWidget(QtWidgets.QWidget):
         self.imageAnalysisWidget.show_object_roi.connect(self.video_window.toggle_ROI_object)
         self.imageAnalysisWidget.show_feature_roi.connect(self.video_window.toggle_ROI)
 
-        self.imageAnalysisWidget.save_signal.connect(self.save_analysis_data)
+#        self.imageAnalysisWidget.save_signal.connect(self.save_analysis_data)
+        self.imageAnalysisWidget.save_signal.connect(self.save_translation_analysis_data)
         self.imageAnalysisWidget.save_images_signal.connect(self.video_window.toggle_save_images)
         self.imageAnalysisWidget.track_signal.connect(self.video_window.toggle_tracking)
+        
+        self.imageAnalysisWidget.track_obj_signal.connect(self.video_window.update_track_object_flag)
+        self.imageAnalysisWidget.track_features_signal.connect(self.video_window.update_track_features_flag)
+
 
         self.video_window.roi_circle_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
         self.video_window.roi_circle_size_signal.connect(self.imageAnalysisWidget.update_size_display)
