@@ -224,6 +224,9 @@ class CentralWidget(QtWidgets.QWidget):
 
         # self.csv_reader.LED_intensity_data.connect(self.video_window.initialize_led_intensity)
 
+#        self.csv_reader.ImageNames_data.connect(self.video_window.initialize_image_names)
+                   # Need to connect the new Image Names
+        self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
         self.csv_reader.ImageNames_data.connect(self.video_window.initialize_image_names)
         
         # Added Image Index as another connection
@@ -827,13 +830,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
-            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile, Tmin = 0 , Tmax = 3600)
+            self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
             self.central_widget.video_window.initialize_parameters()
-
-            # Need to connect the new Image Names
-
-            self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
-            self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
 
         
     def save_3Dplot(self):

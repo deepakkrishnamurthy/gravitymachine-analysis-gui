@@ -233,7 +233,6 @@ class VideoWindow(QtWidgets.QWidget):
     def add_annotation(self):
 
         if(len(self.Image_Time)!= 0):
-            print(self.current_track_index)
             currTime = self.Image_Time[self.current_track_index]
 
             #            centroid = [int(self.imW/2) + self.Xobj_image[self.current_track_index], int(self.imH/2) - self.Zobj_image[self.current_track_index]]
@@ -270,7 +269,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.image_dict = image_dict
 
     def initialize_image_names(self,image_names):
-        self.Image_Names=image_names
+        self.Image_Names = image_names
         
         if len(self.Image_Names)>0:
             self.refreshImage(self.Image_Names[0])
@@ -285,8 +284,10 @@ class VideoWindow(QtWidgets.QWidget):
     def initialize_parameters(self):
         # Flag set to true when a new dataset is opened
         self.newData = True
-        print('In initialize parameters')
+        print(50*'*')
+        print('Initializing parameters')
         print(self.newData)
+        print(50*'*')
         if self.playButton.isChecked():
             self.playButton.setChecked(False)
             self.timer.stop()
@@ -294,8 +295,8 @@ class VideoWindow(QtWidgets.QWidget):
             self.positionSpinBox.setEnabled(True)
             
         self.current_track_index = 0
-        self.current_track_time=0
-        self.current_computer_time=0
+        self.current_track_time = 0
+        self.current_computer_time = 0
         self.positionSlider.setValue(0)
         self.positionSpinBox_prevValue=0
         self.positionSlider_prevValue=0
