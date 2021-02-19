@@ -1,14 +1,14 @@
 # Gravity Machine Analysis GUI 
 
 ## Introduction
-This is a custom GUI-based data analysis tool for visualizing and analyzing gravity machine datasets. Gravity machine is the nickname for Scale-free Vertical Tracking Microscopy, a method developed by [D Krishnamurthy et. al : Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography](https://doi.org/10.1101/610246). 
+This is a custom GUI-based data analysis tool for visualizing and analyzing Gravity Machine datasets. Gravity machine is the nickname for Scale-free Vertical Tracking Microscopy, a method developed by [Deepak Krishnamurthy et al.](https://www.nature.com/articles/s41592-020-0924-7) at [Prakash lab, Stanford](https://github.com/prakashlab). 
 
-The program has a few run-time dependencies which can be installed by following *GM_Analysis_Installation.md*.
+The dependencies can be installed by following instructions in the *GM_Analysis_Installation.md* file.
 
-To launch open a terminal, activate the appropriate virtual environment (conda activate ...). After this type:
+To launch the tool, open a terminal, activate the appropriate virtual environment (conda activate ...). After this launch the folowing script:
 	
 	python DataAnalyser.py
-
+	
 ## Basic usage
 
 ### Opening a dataset
@@ -20,12 +20,23 @@ To change track parameters such as Pixel size, chamber dimensions etc., navigate
 ### Changing Video Playback speed
 To change the playback speed of the video, navigate to *Video > Video Parameters* or hit *'Ctrl + V'*. Use the slider or entry box to enter the playback factor. Playback factor of *'1'* corresponds to real-time playback.
 
-
-## To cite this tool:
-
-Krishnamurthy, Deepak, Hongquan Li, François Benoit du Rey, Pierre Cambournac, Adam Larson, and Manu Prakash. "Scale-free Vertical Tracking Microscopy: Towards Bridging Scales in Biological Oceanography." bioRxiv (2019): 610246.
+### Saving analysis data
+Currently a very basic widget allows you to annotate the track ID, condition and also choose the time interval of interest. This widget also allows a simple means toe stimate the size of the object. All this analysis notes can be saved as a CSV file by clicking *'Save analysis params'*.
 
 
+## Publications:
+1. Krishnamurthy, Deepak, Hongquan Li, François Benoit du Rey, Pierre Cambournac, Adam G. Larson, Ethan Li, and Manu Prakash. "Scale-free vertical tracking microscopy." Nature Methods (2020): 1-12. [Weblink](https://www.nature.com/articles/s41592-020-0924-7)
 
+## To cite this tool
+	@article{krishnamurthy2020scale,
+	  title={Scale-free vertical tracking microscopy},
+	  author={Krishnamurthy, Deepak and Li, Hongquan and du Rey, Fran{\c{c}}ois Benoit and Cambournac, Pierre and Larson, Adam G and Li, Ethan and Prakash, Manu},
+	  journal={Nature Methods},
+	  volume={17},
+	  number={10},
+	  pages={1040--1051},
+	  year={2020},
+	  publisher={Nature Publishing Group}
+	}
 #### Contributors: 
 Deepak Krishnamurthy, Francois benoit du Rey and Ethan Li
