@@ -29,7 +29,7 @@ class CSV_Reader(QtCore.QObject):
     ImageNames_data = QtCore.pyqtSignal(np.ndarray)
     ImageTime_data = QtCore.pyqtSignal(np.ndarray)
     LED_intensity_data = QtCore.pyqtSignal(np.ndarray)
-#    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
+    ImageIndex_data = QtCore.pyqtSignal(np.ndarray)
     
     
     def __init__(self, parent=None, Width = 5, Length = 30, flip_z = False, pixelPermm = 449):
@@ -240,7 +240,7 @@ class CSV_Reader(QtCore.QObject):
         self.ImageTime_data.emit(np.array(ImageTime))
         # self.LED_intensity_data.emit(np.array(new_LED_intensity))
         
-#        self.ImageIndex_data.emit(np.array(ImageIndex))
+        self.ImageIndex_data.emit(np.array(ImageIndex))
         
         #fps calculation
         print('calculate fps')

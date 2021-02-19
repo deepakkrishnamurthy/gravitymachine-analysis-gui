@@ -192,7 +192,6 @@ class VideoWindow(QtWidgets.QWidget):
         # Run the tracking if run_tracking_flag is true\
         if(self.tracking_flag == True):
             self.track()
-            self.image_files.append(os.path.join(self.image_dict[image_name], image_name))
             if(self.save_images_flag):
                 cropped_image = self.image[int(self.bbox_object[1]):int(self.bbox_object[1]+self.bbox_object[3]), int(self.bbox_object[0]):int(self.bbox_object[0]+self.bbox_object[2])]
                 self.image_signal.emit(cropped_image, image_name)
@@ -272,6 +271,7 @@ class VideoWindow(QtWidgets.QWidget):
         self.Image_Names = image_names
         
         if len(self.Image_Names)>0:
+            self.current_track_index = 0
             self.refreshImage(self.Image_Names[0])
  
     def initialize_image_time(self,image_time):
@@ -280,6 +280,10 @@ class VideoWindow(QtWidgets.QWidget):
         self.positionSlider.setEnabled(True)
         self.positionSpinBox.setRange(self.Image_Time[0],self.Image_Time[-1])
         self.positionSpinBox.setEnabled(True)
+        
+    def initialize_index(self, image_index):
+        
+        self.image_index = image_index
         
     def initialize_parameters(self):
         # Flag set to true when a new dataset is opened
@@ -639,9 +643,10 @@ class VideoWindow(QtWidgets.QWidget):
     def track(self):
 
         self.curr_time = self.Image_Time[self.current_track_index]
-        
-        # Store the track index for the current time point
-        self.track_indices.append(self.current_track_index)
+        image_name = self.Image_Names[self.current_track_index]
+        self.image_files.append(os.path.join(self.image_dict[image_name], image_name))
+        # Store the track index for the current time point (recall the current indexing is only for time points with images, so we need to map to the image index)
+        self.track_indices.append(self.image_index[self.current_track_index])
         
         self.Timestamp_array.append(self.curr_time)
         

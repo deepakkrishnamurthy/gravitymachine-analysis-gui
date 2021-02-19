@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from pyqtgraph.Qt import QtWidgets,QtCore, QtGui #possible to import form PyQt5 too ... what's the difference? speed? 
-#QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
 from CSV_Reader import CSV_Reader
 from plot3D import plot3D_widget
@@ -228,6 +228,7 @@ class CentralWidget(QtWidgets.QWidget):
                    # Need to connect the new Image Names
         self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
         self.csv_reader.ImageNames_data.connect(self.video_window.initialize_image_names)
+        self.csv_reader.ImageIndex_data.connect(self.video_window.initialize_index)
         
         # Added Image Index as another connection
 #        self.csv_reader.ImageIndex_data.connect(self.video_window.initialize_image_index)
@@ -830,8 +831,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
             # Open the CSV file before initializing parameters since otherwise it 
             # tries to open image before refreshing the image name list
+
             self.central_widget.csv_reader.open_newCSV(self.directory, self.trackFile)
             self.central_widget.video_window.initialize_parameters()
+
 
         
     def save_3Dplot(self):
