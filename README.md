@@ -21,7 +21,7 @@ To change track parameters such as Pixel size, chamber dimensions etc., navigate
 To change the playback speed of the video, navigate to *Video > Video Parameters* or hit *'Ctrl + V'*. Use the slider or entry box to enter the playback factor. Playback factor of *'1'* corresponds to real-time playback.
 
 ### Saving analysis data
-Currently a very basic widget allows you to annotate the track ID, condition and also choose the time interval of interest. This widget also allows a simple means toe stimate the size of the object. All this analysis notes can be saved as a CSV file by clicking *'Save analysis params'*.
+Currently a very basic widget allows you to annotate the track ID, condition and also choose the time interval of interest. This widget also allows a simple means to stimate the size of the tracked object. This analysis notes can be saved as a CSV file by clicking *'Save analysis params'*.
 
 
 ## Publications:
