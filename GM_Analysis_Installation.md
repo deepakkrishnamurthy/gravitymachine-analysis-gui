@@ -22,4 +22,4 @@ by running conda init"
 Ensure that at this stage you are inside the conda environment. You can check this by seeing a `(envName)Joes-MacBook-Pro:` in your terminal prompt
 
 ## Install the required dependencies
-	pip install -r requirements.ext
+	pip install -r requirements.txt
