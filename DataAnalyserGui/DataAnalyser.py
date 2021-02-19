@@ -14,7 +14,8 @@ from plot3D import plot3D_widget
 from VideoWindow import VideoWindow
 from PlotWidget import PlotWidget
 from VideoSaver import VideoSaver
-from imageAnalysisWidget import imageAnalysisWidget
+from AnalysisWidget import AnalysisWidget
+from _def import VARIABLE_HEADER_MAPPING
 
 from aqua.qsshelper import QSSHelper
 
@@ -28,11 +29,8 @@ from aqua.qsshelper import QSSHelper
 '''
 class CentralWidget(QtWidgets.QWidget):
     
-   
     def __init__(self):
         super().__init__()
-    
-        
         # widgets
         self.video_window=VideoWindow(PixelPermm = 314)
         self.fps=None #fps for saving
@@ -42,29 +40,16 @@ class CentralWidget(QtWidgets.QWidget):
 
         self.plot3D_widget = plot3D_widget()
 
-        self.imageAnalysisWidget = imageAnalysisWidget()
+        self.AnalysisWidget = AnalysisWidget()
         # controller
 
         self.video_saver=VideoSaver()
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
 
         self.csv_reader=CSV_Reader(flip_z = False)
-        
-        
-    
         #----------------------------------------------------------------------
         # Toggle Comment/Uncomment to turn Z-plot ON and OFF
         #----------------------------------------------------------------------
-#        v_layout.addWidget(self.zplot)
-
-
-        # v_layout.addWidget(self.video_window)
-        # v_layout.addLayout(plot3D_layout)
-
-        # v_layout.setStretchFactor(plot3D_layout,0.5)
-  
-
-        
         # VERTICAL LAYOUT ON THE LEFT
         
         v_left_layout=QtGui.QVBoxLayout()
@@ -73,7 +58,7 @@ class CentralWidget(QtWidgets.QWidget):
         v_right_layout = QtGui.QVBoxLayout()
         v_right_layout.addWidget(self.plot3D_widget)
         # Comment/Uncomment below to remove the image analysis widget
-        v_right_layout.addWidget(self.imageAnalysisWidget)
+        v_right_layout.addWidget(self.AnalysisWidget)
 #        v_right_layout=QtGui.QVBoxLayout()
 #        v_right_layout.addWidget(self.xplot)
 #        v_right_layout.addWidget(self.yplot)
@@ -97,12 +82,9 @@ class CentralWidget(QtWidgets.QWidget):
 #        self.setLayout(v_layout)
         self.setLayout(h_layout)
         
-    
-        
     def update_recording_fps(self,fps):
         self.fps=np.round(fps,2)
         
-    
     def record_change(self,isRecording):
         self.isRecording=isRecording
         if isRecording:
@@ -151,43 +133,24 @@ class CentralWidget(QtWidgets.QWidget):
             self.image_saver.wait() #all element in the queue should be processed
             self.video_saver.stop() #release the video
 
-    def save_analysis_data(self, track_ID, Tmin, Tmax, x_pos, y_pos):
-
-        save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/TrackSegments'
-
-        print('Saving analysis file...')
-        print('Tmin', Tmin)
-        print('Tmax', Tmax)
-        print('X centroid', x_pos)
-        print('Y centroid', y_pos)
-        print('track ID', track_ID)
-        # Create a csv file
-        df = pd.DataFrame({'Sphere ID': [track_ID], 'track folder':[self.csv_reader.directory], 'track file':[self.csv_reader.file_name], 'Tmin':[Tmin],'Tmax':[Tmax],'X centroid':[x_pos], 'Y centroid':[y_pos]})
-
-        df.to_csv(os.path.join(save_folder, track_ID+'_'+str(int(Tmin))+'_'+str(int(Tmax)) +'.csv'))
-
     def connect_all(self):
         
         self.csv_reader.Time_data.connect(self.xplot.update_Time)
         self.csv_reader.Time_data.connect(self.yplot.update_Time)
         self.csv_reader.Time_data.connect(self.zplot.update_Time)
         
-        self.csv_reader.Xobjet_data.connect(self.xplot.update_plot)
-        self.csv_reader.Yobjet_data.connect(self.yplot.update_plot)
-        self.csv_reader.Zobjet_data.connect(self.zplot.update_plot)
+        self.csv_reader.Xobj_data.connect(self.xplot.update_plot)
+        self.csv_reader.Yobj_data.connect(self.yplot.update_plot)
+        self.csv_reader.Zobj_data.connect(self.zplot.update_plot)
         self.csv_reader.fps_data.connect(self.update_recording_fps)
         
         self.csv_reader.Time_data.connect(self.plot3D_widget.plot3D.update_Time)
-        self.csv_reader.Xobjet_data.connect(self.plot3D_widget.plot3D.update_X)
-        self.csv_reader.Yobjet_data.connect(self.plot3D_widget.plot3D.update_Y)
-        self.csv_reader.Zobjet_data.connect(self.plot3D_widget.plot3D.update_Z)
+        self.csv_reader.Xobj_data.connect(self.plot3D_widget.plot3D.update_X)
+        self.csv_reader.Yobj_data.connect(self.plot3D_widget.plot3D.update_Y)
+        self.csv_reader.Zobj_data.connect(self.plot3D_widget.plot3D.update_Z)
         
         self.csv_reader.ImageTime_data.connect(self.video_window.initialize_image_time)
-        
-        self.csv_reader.obj_centroids.connect(self.video_window.initialize_obj_centroids)
-
-        # self.csv_reader.LED_intensity_data.connect(self.video_window.initialize_led_intensity)
-
+        self.csv_reader.ObjLoc_data.connect(self.video_window.initialize_obj_centroids)
         self.csv_reader.ImageNames_data.connect(self.video_window.initialize_image_names)
         
         # Added Image Index as another connection
@@ -205,11 +168,13 @@ class CentralWidget(QtWidgets.QWidget):
         self.video_window.imageName.connect(self.add_name)
 
         # Image analysis widget connections
-        self.imageAnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
-        self.imageAnalysisWidget.save_analysis_data.connect(self.save_analysis_data)
+        self.AnalysisWidget.show_roi.connect(self.video_window.toggle_ROI_show)
 
-        self.video_window.roi_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
-        self.video_window.roi_size_signal.connect(self.imageAnalysisWidget.update_size_display)
+        self.video_window.roi_pos_signal.connect(self.AnalysisWidget.update_pos_display)
+        self.video_window.roi_size_signal.connect(self.AnalysisWidget.update_size_display)
+
+        # metadata
+        self.csv_reader.pixelpermm_data.connect(self.video_window.update_pixelsize)
 
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -350,6 +315,11 @@ class optionsTrack_Dialog(QtGui.QDialog):
     def send_pixelsize(self):
         self.PixelPermm_value = int(self.spinbox_pixelpermm.value())
         self.pixelpermm.emit(self.PixelPermm_value)
+
+    def set_pixelsize(self, pixelpermm):
+        self.PixelPermm_value = pixelpermm
+        self.spinbox_pixelpermm.setvalue(self.PixelPermm_value)
+
 
     def send_x_offset(self):
         self.x_offset_value = round(self.spinbox_x_offset.value(),1)
@@ -741,8 +711,10 @@ class MainWindow(QtWidgets.QMainWindow):
         editmenu.addAction(optionTimeInterval)
         Videomenu.addAction(optionVideo)
         
+        # Connections
         self.central_widget.video_window.imageName.connect(self.update_statusBar)
         self.central_widget.csv_reader.Time_data.connect(self.initialize_image_time)
+        self.central_widget.AnalysisWidget.save_analysis_data.connect(self.save_analysis_data)
         
         
     def openFile(self):
@@ -760,14 +732,23 @@ class MainWindow(QtWidgets.QMainWindow):
             for dirs, subdirs, files in os.walk(self.directory, topdown=False):
                
                 root, subFolderName = os.path.split(dirs)
-                    
-                print(subFolderName[0:6])
-                if('images' in subFolderName):
+                print('Dir: ',dirs)
+                print('Subdir: ',subdirs)
+                for file in files: 
+                    # Find folders that contain the image stream we want to load. For backward compatibility this also checks all folders starting with 'images' 
+                    if(file.lower().endswith('tif') and (((VARIABLE_HEADER_MAPPING['Image name'] in dirs) or ('images' in dirs)))):
+                        key = file
+                        value = dirs
+                        self.image_dict[key]=value
+                # print(subFolderName)
+                # if('images' in subFolderName):
                    
-                   for fileNames in files:
-                       key = fileNames
-                       value = subFolderName
-                       self.image_dict[key]=value
+                #    for fileNames in files:
+                #        key = fileNames
+                #        value = subFolderName
+                #        self.image_dict[key]=value
+                # elif(VARIABLE_HEADER_MAPPING['Image name'] in subFolderName):
+
 
 
                 print('Loaded {}'.format(self.trackFile))
@@ -788,7 +769,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.central_widget.csv_reader.ImageTime_data.connect(self.central_widget.video_window.initialize_image_time)
             self.central_widget.csv_reader.ImageNames_data.connect(self.central_widget.video_window.initialize_image_names)
 
+    def save_analysis_data(self, track_ID, track_condition, Tmin, Tmax, radius):
         
+        print('Saving analysis file...')
+        analysis_data = pd.DataFrame({'Organism':[], 'Condition':[], 'Radius (px)':[],'Tmin':[], 'Tmax':[]})
+        analysis_data = analysis_data.append(pd.DataFrame({'Organism':[track_ID], 'Condition':[track_condition], 'Radius (px)':[radius], 'Tmin':[Tmin], 'Tmax':[Tmax]}))
+        analysis_data.to_csv(os.path.join(self.directory, 'analysis_data.csv'))
+        print('Saved analysis file')
+
     def save_3Dplot(self):
         self.central_widget.plot3D_widget.plot3D.save_plot(quality = 10)
       
@@ -811,6 +799,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Update the 2D plots with the offsets
         options_dialog_track.x_offset.connect(self.central_widget.xplot.update_offset)
         options_dialog_track.y_offset.connect(self.central_widget.yplot.update_offset)
+
+        self.central_widget.csv_reader.pixelpermm_data.connect(options_dialog_track.set_pixelsize)
         
         
         options_dialog_track.exec_()
