@@ -5,10 +5,10 @@ from pyqtgraph.Qt import QtWidgets,QtCore, QtGui
 import pyqtgraph as pg
 
 
-class imageAnalysisWidget(QtWidgets.QWidget):
+class AnalysisWidget(QtWidgets.QWidget):
 
 	show_roi = QtCore.pyqtSignal(bool)
-	save_analysis_data = QtCore.pyqtSignal(str, float, float, int, int)
+	save_analysis_data = QtCore.pyqtSignal(str, str, float, float, int)
 
 	def __init__(self):
 		super().__init__()
@@ -30,8 +30,11 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 		self.save_button.setEnabled(True)
 
 		# Entry label for Sphere/Organism ID
-		self.track_ID_label = QtGui.QLabel('track ID')
+		self.track_ID_label = QtGui.QLabel('Organism')
 		self.track_ID = QtGui.QLineEdit()
+
+		self.track_condition_label = QtGui.QLabel('Condition')
+		self.track_condition = QtGui.QLineEdit()
 
 		self.Tmin_label = QtGui.QLabel('T min')
 		self.Tmax_label = QtGui.QLabel('T max')
@@ -75,13 +78,15 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 		overall_layout = QtGui.QGridLayout()
 		overall_layout.addWidget(self.track_ID_label,0,0)
 		overall_layout.addWidget(self.track_ID,0,1)
+		overall_layout.addWidget(self.track_condition_label,0,2)
+		overall_layout.addWidget(self.track_condition,0,3)
 		overall_layout.addWidget(self.Tmin_label,1,0)
 		overall_layout.addWidget(self.Tmin,1,1)
-		overall_layout.addWidget(self.Tmax_label,2,0)
-		overall_layout.addWidget(self.Tmax,2,1)
-		overall_layout.addLayout(pos_grid_layout,3,0,1,2)
-		overall_layout.addWidget(self.roi_button,4,0)
-		overall_layout.addWidget(self.save_button,4,1)
+		overall_layout.addWidget(self.Tmax_label,1,2)
+		overall_layout.addWidget(self.Tmax,1,3)
+		overall_layout.addLayout(pos_grid_layout,2,0,1,2)
+		overall_layout.addWidget(self.roi_button,3,0)
+		overall_layout.addWidget(self.save_button,3,1)
 
 
 		self.setLayout(overall_layout)
@@ -100,7 +105,9 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 		Tmin = float(self.Tmin.text())
 		Tmax = float(self.Tmax.text())
 		track_ID = self.track_ID.text()
-		self.save_analysis_data.emit(track_ID, Tmin, Tmax, int(self.x_pos_value.text()), int(self.y_pos_value.text())) 
+		track_condition = self.track_condition.text()
+		radius = int(self.size_value.text())
+		self.save_analysis_data.emit(track_ID, track_condition, Tmin, Tmax, radius) 
 
 	def update_pos_display(self, xpos, ypos):
 

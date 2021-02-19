@@ -234,29 +234,13 @@ class VideoWindow(QtWidgets.QWidget):
 
         if(len(self.Image_Time)!= 0):
             currTime = self.Image_Time[self.current_track_index]
-
-            #            centroid = [int(self.imW/2) + self.Xobj_image[self.current_track_index], int(self.imH/2) - self.Zobj_image[self.current_track_index]]
-
-
-            #            cv2.circle(self.image,(centroid[0],centroid[1]), 15, (255,255,255), 3)
-            # print('Current self.image Time: {}'.format(currTime))
             cv2.putText(self.image, '{:.2f}'.format(np.round(currTime, decimals = 2))+'s', self.timeStampPosition(), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
-
-            # if(LED_intensity>0):
-            #     cv2.putText(self.image, 'Light ON', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-            # else:
-            #     cv2.putText(self.image, 'Light OFF', (580, 30), font, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
-
             x_start = self.imW - int((self.scalebarSize/1000)*(self.PixelPermm))-self.scaleBar_offset()
             y_start = self.imH - self.scaleBar_offset()
             x_end = self.imW - self.scaleBar_offset()
             y_end = y_start
-
             scaleBar_text_offset = self.scaleBar_text_offset()
-
             cv2.putText(self.image, '{:d}'.format(self.scalebarSize)+'um', (int(x_end)-scaleBar_text_offset[0], y_start - scaleBar_text_offset[1]), font, self.fontScale(), (255, 255, 255), 2, cv2.LINE_AA)
-
             cv2.line(self.image, (x_start, y_start), (x_end, y_end), color =(255,255,255), thickness = int(self.imH*5/720),lineType = cv2.LINE_AA)
         
     def initialize_directory(self,directory, image_dict):
