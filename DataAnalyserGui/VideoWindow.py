@@ -400,6 +400,9 @@ class VideoWindow(QtWidgets.QWidget):
             self.positionSlider.setValue(self.current_track_index)
             self.prev_track_index = self.current_track_index
 
+    def update_frame_stride(self, stride):
+        self.frames_stride = stride
+
     def update_pixelsize(self, PixelPermm):
         self.PixelPermm = PixelPermm
 

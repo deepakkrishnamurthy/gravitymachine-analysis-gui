@@ -18,9 +18,6 @@ from imageAnalysisWidget import imageAnalysisWidget
 
 from aqua.qsshelper import QSSHelper
 
-                   
-# Testing to see branch changes
- 
 '''
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #                            Central Widget
@@ -34,7 +31,7 @@ class CentralWidget(QtWidgets.QWidget):
     
         
         # widgets
-        self.video_window=VideoWindow(PixelPermm = 314)
+        self.video_window = VideoWindow(PixelPermm = 314)
         self.fps=None #fps for saving
         self.xplot = PlotWidget('X displacement', label = 'X',color ='r')
         self.yplot = PlotWidget('Y displacement', label = 'Y',color ='g')
@@ -47,6 +44,8 @@ class CentralWidget(QtWidgets.QWidget):
 
         self.video_saver=VideoSaver()
         self.isImageSaver=False  #True: image_saver will be chose in place of video saver
+
+        self.image_save_folder = None
 
         self.csv_reader=CSV_Reader(flip_z = False)
         #----------------------------------------------------------------------
@@ -196,8 +195,11 @@ class CentralWidget(QtWidgets.QWidget):
 
         self.video_window.initialize_track_variables()
 
+    def set_image_save_dir(self, directory):
+        self.image_save_folder = directory
+        print('Set image save path to', self.image_save_folder)
+
     def save_images(self, image, image_name):
-        self.image_save_folder = 'C:/Users/Deepak/Dropbox/ActiveMassTransport_Vorticella_SinkingAggregates/RotationalAnalysis/FinalAnalysis/AnnotatedImages'
 
         cv2.imwrite(os.path.join(self.image_save_folder, image_name), image)
         print('Wrote image {} to disk'.format(image_name))
@@ -256,11 +258,11 @@ class CentralWidget(QtWidgets.QWidget):
         
         self.imageAnalysisWidget.track_obj_signal.connect(self.video_window.update_track_object_flag)
         self.imageAnalysisWidget.track_features_signal.connect(self.video_window.update_track_features_flag)
-
+        self.imageAnalysisWidget.save_images_dir.connect(self.set_image_save_dir)
+        self.imageAnalysisWidget.frame_stride_signal.connect(self.video_window.update_frame_stride)
 
         self.video_window.roi_circle_pos_signal.connect(self.imageAnalysisWidget.update_pos_display)
         self.video_window.roi_circle_size_signal.connect(self.imageAnalysisWidget.update_size_display)
-
         self.video_window.image_signal.connect(self.save_images)
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

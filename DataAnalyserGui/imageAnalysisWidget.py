@@ -15,6 +15,8 @@ class imageAnalysisWidget(QtWidgets.QWidget):
     track_features_signal = QtCore.pyqtSignal(bool)
     save_signal = QtCore.pyqtSignal(str, int)
     save_images_signal = QtCore.pyqtSignal(bool)
+    save_images_dir = QtCore.pyqtSignal(str)
+    frame_stride_signal = QtCore.pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -63,6 +65,14 @@ class imageAnalysisWidget(QtWidgets.QWidget):
         self.save_images = QtGui.QCheckBox('Save images')
         self.save_images.setChecked(False)
 
+        # Choose folder to save images
+        self.btn_setSavingDir = QtGui.QPushButton('Browse')
+        self.btn_setSavingDir.setDefault(False)
+        # self.btn_setSavingDir.setIcon(QIcon('icon/folder.png'))
+        self.lineEdit_savingDir = QtGui.QLineEdit()
+        self.lineEdit_savingDir.setReadOnly(True)
+        self.lineEdit_savingDir.setText('Choose a directory for saving images')
+
         # Entry label for Sphere/Organism ID
         self.track_ID_label = QtGui.QLabel('track ID')
         self.track_ID = QtGui.QLineEdit()
@@ -83,6 +93,17 @@ class imageAnalysisWidget(QtWidgets.QWidget):
         self.size_value = QtGui.QLabel()
         self.size_value.setNum(0)
 
+        self.frame_stride_label = QtGui.QLabel('frame stride')
+        self.frame_stride_spinbox = QtGui.QSpinBox()
+        self.frame_stride_spinbox.setMinimum(1) 
+        self.frame_stride_spinbox.setMaximum(20) 
+        self.frame_stride_spinbox.setSingleStep(1)
+        self.frame_stride_spinbox.setValue(10)
+
+        frame_stride_layout = QtGui.QHBoxLayout()
+        frame_stride_layout.addWidget(self.frame_stride_label)
+        frame_stride_layout.addWidget(self.frame_stride_spinbox)
+
         # Connections
 
         self.circular_roi_button.clicked.connect(self.handle_circular_roi_button)
@@ -94,6 +115,8 @@ class imageAnalysisWidget(QtWidgets.QWidget):
         
         self.track_object_checkbox.stateChanged.connect(self.handle_track_object_checkbox)
         self.track_features_checkbox.stateChanged.connect(self.handle_track_features_checkbox)
+        self.btn_setSavingDir.clicked.connect(self.set_save_images_dir)
+        self.frame_stride_spinbox.valueChanged.connect(self.send_frame_stride)
         
         # Initialization function calls
         self.handle_track_object_checkbox()
@@ -112,15 +135,23 @@ class imageAnalysisWidget(QtWidgets.QWidget):
         overall_layout = QtGui.QGridLayout()
         overall_layout.addWidget(self.track_ID_label,0,0)
         overall_layout.addWidget(self.track_ID,0,1)
-        overall_layout.addLayout(pos_grid_layout,1,0,1,2)
-        overall_layout.addWidget(self.circular_roi_button,2,0)
-        overall_layout.addWidget(self.object_roi_button,2,1)
-        overall_layout.addWidget(self.feature_roi_button,3,0)
-        overall_layout.addWidget(self.track_button,3,1)
+        overall_layout.addLayout(pos_grid_layout,0,2)
+
+        overall_layout.addWidget(self.track_object_checkbox, 2, 0)
+        overall_layout.addWidget(self.track_features_checkbox, 2, 1)
+        overall_layout.addLayout(frame_stride_layout, 2, 2)
+
+        overall_layout.addWidget(self.circular_roi_button,3,0)
+        overall_layout.addWidget(self.object_roi_button,3,1)
+        overall_layout.addWidget(self.feature_roi_button,3,2)
+        
+        overall_layout.addWidget(self.track_button,4,0)
         overall_layout.addWidget(self.save_data_button,4,1)
-        overall_layout.addWidget(self.save_images,4,0)
-        overall_layout.addWidget(self.track_object_checkbox, 5, 0)
-        overall_layout.addWidget(self.track_features_checkbox, 5, 1)
+        overall_layout.addWidget(self.save_images,4,2)
+
+        overall_layout.addWidget(self.btn_setSavingDir, 5,0)
+        overall_layout.addWidget(self.lineEdit_savingDir, 5,1)
+        
         self.setLayout(overall_layout)
 
     def handle_circular_roi_button(self):
@@ -183,6 +214,21 @@ class imageAnalysisWidget(QtWidgets.QWidget):
 
     def update_size_display(self, size):
         self.size_value.setNum(size)
+
+    def set_save_images_dir(self):
+        dialog = QtGui.QFileDialog()
+        save_dir_base = dialog.getExistingDirectory(None, "Select Folder")
+        
+        if(save_dir_base is not None):
+            self.lineEdit_savingDir.setText(save_dir_base)
+            self.save_images_dir.emit(save_dir_base)
+
+    def send_frame_stride(self):
+
+        value = self.frame_stride_spinbox.value()
+
+        self.frame_stride_signal.emit(value)
+
 
 
 
