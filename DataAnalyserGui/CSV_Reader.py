@@ -91,7 +91,12 @@ class CSV_Reader(QtCore.QObject):
         self.ColumnNames = list(self.df.columns.values)
 
         for key in VARIABLE_HEADER_MAPPING:
-            self.data[key] = np.array(self.df[VARIABLE_HEADER_MAPPING[key]])
+            if(VARIABLE_HEADER_MAPPING[key] in self.ColumnNames):
+                self.data[key] = np.array(self.df[VARIABLE_HEADER_MAPPING[key]])
+            else:
+                print('Warning {} not found in input data'.format(key))
+                self.data[key] = None
+
    
         self.index_min=0
         self.index_max=len(self.df)-1
@@ -111,7 +116,8 @@ class CSV_Reader(QtCore.QObject):
         self.Xobj_data.emit(self.data['X_obj'][self.index_min:self.index_max+1])
         self.Yobj_data.emit(self.data['Y_obj'][self.index_min:self.index_max+1])
         self.Zobj_data.emit(self.data['Z_obj'][self.index_min:self.index_max+1])
-        self.ObjLoc_data.emit(self.data['X_image'][self.index_min:self.index_max+1], self.data['Z_image'][self.index_min:self.index_max+1])
+        if(self.data['X_image'] is not None and self.data['Z_image'] is not None):
+                self.ObjLoc_data.emit(self.data['X_image'][self.index_min:self.index_max+1], self.data['Z_image'][self.index_min:self.index_max+1])
         print('data sent')
         
     def send_metadata(self):
