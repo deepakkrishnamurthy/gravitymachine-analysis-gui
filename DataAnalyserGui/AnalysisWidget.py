@@ -54,7 +54,7 @@ class AnalysisWidget(QtWidgets.QWidget):
 		self.y_pos_value.setNum(0)
 
 		# ROI size
-		self.size_label = QtGui.QLabel('ROI radius')
+		self.size_label = QtGui.QLabel('ROI diameter')
 
 		self.size_value = QtGui.QLabel()
 		self.size_value.setNum(0)
@@ -106,8 +106,8 @@ class AnalysisWidget(QtWidgets.QWidget):
 		Tmax = float(self.Tmax.text())
 		track_ID = self.track_ID.text()
 		track_condition = self.track_condition.text()
-		radius = int(self.size_value.text())
-		self.save_analysis_data.emit(track_ID, track_condition, Tmin, Tmax, radius) 
+		diameter = int(self.size_value.text())
+		self.save_analysis_data.emit(track_ID, track_condition, Tmin, Tmax, diameter) 
 
 	def update_pos_display(self, xpos, ypos):
 

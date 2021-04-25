@@ -59,14 +59,14 @@ class CentralWidget(QtWidgets.QWidget):
         v_right_layout.addWidget(self.plot3D_widget)
         # Comment/Uncomment below to remove the image analysis widget
         v_right_layout.addWidget(self.AnalysisWidget)
-#        v_right_layout=QtGui.QVBoxLayout()
-#        v_right_layout.addWidget(self.xplot)
-#        v_right_layout.addWidget(self.yplot)
-#        v_right_layout.addWidget(self.zplot)
+        # v_right_layout=QtGui.QVBoxLayout()
+        # v_right_layout.addWidget(self.xplot)
+        # v_right_layout.addWidget(self.yplot)
+        # v_right_layout.addWidget(self.zplot)
 
-#        v_right_layout.setStretchFactor(self.xplot,1)
-#        v_right_layout.setStretchFactor(self.yplot,1)
-#        v_right_layout.setStretchFactor(self.zplot,1)
+        # v_right_layout.setStretchFactor(self.xplot,1)
+        # v_right_layout.setStretchFactor(self.yplot,1)
+        # v_right_layout.setStretchFactor(self.zplot,1)
         h_layout = QtGui.QHBoxLayout()
         h_layout.addLayout(v_left_layout)
 #        h_layout.addLayout(v_right_layout)
@@ -772,8 +772,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def save_analysis_data(self, track_ID, track_condition, Tmin, Tmax, radius):
         
         print('Saving analysis file...')
-        analysis_data = pd.DataFrame({'Organism':[], 'Condition':[], 'Radius (px)':[],'Tmin':[], 'Tmax':[]})
-        analysis_data = analysis_data.append(pd.DataFrame({'Organism':[track_ID], 'Condition':[track_condition], 'Radius (px)':[radius], 'Tmin':[Tmin], 'Tmax':[Tmax]}))
+        analysis_data = pd.DataFrame({'Organism':[], 'Condition':[], 'Diameter (px)':[],'Tmin':[], 'Tmax':[]})
+        analysis_data = analysis_data.append(pd.DataFrame({'Organism':[track_ID], 'Condition':[track_condition], 'Diameter (px)':[radius], 'Tmin':[Tmin], 'Tmax':[Tmax]}))
         analysis_data.to_csv(os.path.join(self.directory, 'analysis_data.csv'))
         print('Saved analysis file')
 
