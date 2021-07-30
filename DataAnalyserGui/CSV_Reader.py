@@ -87,7 +87,8 @@ class CSV_Reader(QtCore.QObject):
         if(Tmin is not None and Tmax is not None):
             # Crop the trajectory
             self.df = self.df.loc[(self.df[VARIABLE_HEADER_MAPPING['Time']]>=Tmin) & (self.df[VARIABLE_HEADER_MAPPING['Time']] <= Tmax)]
-            
+            self.df = self.df[1:]
+
         self.ColumnNames = list(self.df.columns.values)
 
         for key in VARIABLE_HEADER_MAPPING:
