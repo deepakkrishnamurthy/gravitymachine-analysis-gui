@@ -1,11 +1,23 @@
-# Definitions and constants
-# Map between CSV headers and internal state variables of the GUI
+import glob
+import os
 
-# Newer variable mappings (For GM codebase >= v2.0)
-VARIABLE_HEADER_MAPPING = {'Time':'Time', 'X_obj':'X_objStage','Y_obj':'Y_objStage','Z_obj':'Z_objStage','Image name':'DF1', 'X_image':'X_image', 'Z_image':'Z_image'}
-
-# Older variable mappings (For GM codebase < v2.0)
-# VARIABLE_HEADER_MAPPING = {'Time':'Time', 'X_obj':'Xobj','Y_obj':'Yobj','Z_obj':'ZobjWheel','Image name':'Image name', 'X_image':'Xobj_image', 'Z_image':'Zobj'}
+##########################################################
+#### start of loading machine specific configurations ####
+##########################################################
+config_files = glob.glob('..' + '/' + 'configuration*.txt')
+print(config_files)
+if config_files:
+    if len(config_files) > 1:
+        print('multiple data configuration files found, the program will exit')
+        exit()
+    print('load data-specific configuration')
+    exec(open(config_files[0]).read())
+else:
+    print('data configuration file not present, the program will exit')
+    exit()
+##########################################################
+##### end of loading machine specific configurations #####
+##########################################################
 
 class Chamber:
 

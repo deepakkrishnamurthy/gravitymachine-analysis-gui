@@ -1,0 +1,5 @@
+# Map between CSV headers and internal state variables of the GUI
+# Choose the variable mapping that matches your dataset
+
+# Antarctica GM data variable mapping (Uncomment below)
+VARIABLE_HEADER_MAPPING = {'Time':'Time', 'X_obj':'X','Y_obj':'Y','Z_obj':'Z','Image name':'DF1', 'X_image':'X_image', 'Z_image':'Z_image'}

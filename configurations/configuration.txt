@@ -1,0 +1,4 @@
+# Newer variable mappings (For GM codebase >= v2.0)
+VARIABLE_HEADER_MAPPING = {'Time':'Time', 'X_obj':'X_objStage','Y_obj':'Y_objStage','Z_obj':'Z_objStage','Image name':'DF1', 'X_image':'X_image', 'Z_image':'Z_image'}
+
+

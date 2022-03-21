@@ -16,6 +16,7 @@ from pyqtgraph.Qt import QtWidgets,QtCore, QtGui
 import os
 import pandas as pd
 from _def import VARIABLE_HEADER_MAPPING
+import warnings
 
 '''       
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -123,8 +124,16 @@ class CSV_Reader(QtCore.QObject):
         
     def send_metadata(self):
         if(self.metadata is not None):
-            self.pixelpermm_data.emit(float(self.metadata['PixelPermm'][0]))
-            self.objective_data.emit(str(self.metadata['Objective'][0]))
+            try:
+                self.pixelpermm_data.emit(float(self.metadata['PixelPermm'][0]))
+            except:
+                warnings.warn("PixelPermm data not found!")
+
+            try:
+                self.objective_data.emit(str(self.metadata['Objective'][0]))
+            except:
+                warnings.warn("Objective data not found!")
+
         else:
             pass
         
