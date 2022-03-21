@@ -1,7 +1,7 @@
 # Gravity Machine Analysis GUI 
 
 ## Introduction
-This is a custom GUI-based data analysis tool for visualizing and analyzing Gravity Machine datasets. Gravity machine is the nickname for Scale-free Vertical Tracking Microscopy, a method developed by [Deepak Krishnamurthy et al.](https://www.nature.com/articles/s41592-020-0924-7) at [Prakash lab, Stanford](https://github.com/prakashlab). 
+This is a custom GUI-based data analysis tool for visualizing and analyzing Gravity Machine datasets. Gravity machine a.k.a Scale-free Vertical Tracking Microscopy, a method developed by [Deepak Krishnamurthy et al.](https://www.nature.com/articles/s41592-020-0924-7) at [Prakash lab, Stanford](https://github.com/prakashlab). 
 
 The dependencies can be installed by following instructions in the *GM_Analysis_Installation.md* file.
 
@@ -10,6 +10,9 @@ To launch the tool, open a terminal, activate the appropriate virtual environmen
 	python DataAnalyser.py
 	
 ## Basic usage
+
+### [IMPORTANT] Data specific configuration
+Since different datasets may save different fields. Use an existing 'configuration_*.txt' file found in the configurations or folder or create a new one based on the data fields saved in your datasets. The configuration file specifies how these datafields are mapped to the internal variables used within the data-viewer. 
 
 ### Opening a dataset
 To open a new dataset, hit *'Ctrl + O'* or click *File > Open*. Then first choose the folder containing the data (.csv track file + folder containing images). In the next dialog, choose the .csv track file you wish to open.
